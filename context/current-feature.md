@@ -21,3 +21,4 @@ Not Started
 <!-- Keep this updated. Earliest to latest -->
 
 - Project setup and boilerplate cleanup
+- Initial set up: removed default Next.js SVGs and boilerplate, cleaned up globals.css and page.tsx, added CLAUDE.md and context files

@@ -46,6 +46,7 @@ Example v4 configuration:
 @theme {
   --color-primary: oklch(50% 0.2 250);
 }
+```
 
 ## File Organization
 
@@ -91,7 +92,7 @@ Example v4 configuration:
 
 ## Code Quality
 
+- Code should be pure logic (deterministic, no side effects) lives in the center, and impure I/O (database, network, filesystem, UI) lives at the boundary.
 - No commented-out code unless specified
 - No unused imports or variables
 - Keep functions under 50 lines when possible
-```

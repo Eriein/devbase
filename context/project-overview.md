@@ -16,28 +16,28 @@ This creates **context switching**, **lost knowledge**, and **inconsistent workf
 
 ## 👥 Target Users
 
-| Persona | Primary Need |
-|---|---|
-| **Everyday Developer** | Fast access to snippets, prompts, commands, links |
-| **AI-first Developer** | Save/organize prompts, contexts, workflows, system messages |
-| **Content Creator / Educator** | Store code blocks, explanations, course notes |
-| **Full-stack Builder** | Collect patterns, boilerplates, API examples |
+| Persona                        | Primary Need                                                |
+| ------------------------------ | ----------------------------------------------------------- |
+| **Everyday Developer**         | Fast access to snippets, prompts, commands, links           |
+| **AI-first Developer**         | Save/organize prompts, contexts, workflows, system messages |
+| **Content Creator / Educator** | Store code blocks, explanations, course notes               |
+| **Full-stack Builder**         | Collect patterns, boilerplates, API examples                |
 
 ---
 
 ## 🧱 Tech Stack
 
-| Layer | Technology |
-|---|---|
-| **Framework** | [Next.js 16](https://nextjs.org/) / [React 19](https://react.dev/) (SSR + API routes, single repo) |
-| **Language** | [TypeScript](https://www.typescriptlang.org/) |
-| **Database** | [Neon PostgreSQL](https://neon.tech/) |
-| **ORM** | [Prisma 7](https://www.prisma.io/) (use migrations only — never `db push`) |
-| **Auth** | [NextAuth v5](https://authjs.dev/) (email/password + GitHub OAuth) |
-| **File Storage** | [Cloudflare R2](https://developers.cloudflare.com/r2/) (file/image uploads) |
-| **AI** | [OpenAI gpt-5-nano](https://platform.openai.com/) |
-| **Styling** | [Tailwind CSS v4](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/) |
-| **Caching** | Redis (under consideration) |
+| Layer            | Technology                                                                                         |
+| ---------------- | -------------------------------------------------------------------------------------------------- |
+| **Framework**    | [Next.js 16](https://nextjs.org/) / [React 19](https://react.dev/) (SSR + API routes, single repo) |
+| **Language**     | [TypeScript](https://www.typescriptlang.org/)                                                      |
+| **Database**     | [Neon PostgreSQL](https://neon.tech/)                                                              |
+| **ORM**          | [Prisma 7](https://www.prisma.io/) (use migrations only — never `db push`)                         |
+| **Auth**         | [NextAuth v5](https://authjs.dev/) (email/password + GitHub OAuth)                                 |
+| **File Storage** | [Cloudflare R2](https://developers.cloudflare.com/r2/) (file/image uploads)                        |
+| **AI**           | [OpenAI gpt-5-nano](https://platform.openai.com/)                                                  |
+| **Styling**      | [Tailwind CSS v4](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/)                  |
+| **Caching**      | Redis (under consideration)                                                                        |
 
 > ⚠️ **Database Rule:** Never use `db push` or directly modify the database structure. All schema changes go through Prisma migrations, run first in dev, then in prod.
 
@@ -47,15 +47,15 @@ This creates **context switching**, **lost knowledge**, and **inconsistent workf
 
 Each item has a system type. Users will eventually be able to create custom types (Pro only), but these system types are immutable:
 
-| Type | Color | Hex | Icon | Content Model | Route |
-|---|---|---|---|---|---|
-| 🟦 Snippet | Blue | `#3b82f6` | `Code` | text | `/items/snippets` |
-| 🟪 Prompt | Purple | `#8b5cf6` | `Sparkles` | text | `/items/prompts` |
-| 🟧 Command | Orange | `#f97316` | `Terminal` | text | `/items/commands` |
-| 🟨 Note | Yellow | `#fde047` | `StickyNote` | text | `/items/notes` |
-| ⬜ File | Gray | `#6b7280` | `File` | file (Pro) | `/items/files` |
-| 🟫 Image | Pink | `#ec4899` | `Image` | file (Pro) | `/items/images` |
-| 🟩 Link | Emerald | `#10b981` | `Link` | url | `/items/links` |
+| Type       | Color   | Hex       | Icon         | Content Model | Route             |
+| ---------- | ------- | --------- | ------------ | ------------- | ----------------- |
+| 🟦 Snippet | Blue    | `#3b82f6` | `Code`       | text          | `/items/snippets` |
+| 🟪 Prompt  | Purple  | `#8b5cf6` | `Sparkles`   | text          | `/items/prompts`  |
+| 🟧 Command | Orange  | `#f97316` | `Terminal`   | text          | `/items/commands` |
+| 🟨 Note    | Yellow  | `#fde047` | `StickyNote` | text          | `/items/notes`    |
+| ⬜ File    | Gray    | `#6b7280` | `File`       | file (Pro)    | `/items/files`    |
+| 🟫 Image   | Pink    | `#ec4899` | `Image`      | file (Pro)    | `/items/images`   |
+| 🟩 Link    | Emerald | `#10b981` | `Link`       | url           | `/items/links`    |
 
 Icons sourced from [Lucide Icons](https://lucide.dev/).
 
@@ -302,6 +302,7 @@ model ItemTag {
 ```
 
 **Key relationships:**
+
 - User → Items: one-to-many
 - User → Collections: one-to-many
 - User → ItemTypes: one-to-many (custom types only; system types have null userId)
@@ -313,16 +314,16 @@ model ItemTag {
 
 ## 💰 Monetization (Freemium)
 
-| | Free | Pro ($8/mo · $72/yr) |
-|---|---|---|
-| **Items** | 50 total | Unlimited |
-| **Collections** | 3 | Unlimited |
-| **Types** | System types (no file/image) | All types + custom types (later) |
-| **Search** | Basic | Full |
-| **File/Image Upload** | ✗ | ✓ (via Cloudflare R2) |
-| **AI Features** | ✗ | Auto-tag, Explain Code, Summarize, Prompt Optimizer |
-| **Export** | ✗ | JSON / ZIP |
-| **Priority Support** | ✗ | ✓ |
+|                       | Free                         | Pro ($8/mo · $72/yr)                                |
+| --------------------- | ---------------------------- | --------------------------------------------------- |
+| **Items**             | 50 total                     | Unlimited                                           |
+| **Collections**       | 3                            | Unlimited                                           |
+| **Types**             | System types (no file/image) | All types + custom types (later)                    |
+| **Search**            | Basic                        | Full                                                |
+| **File/Image Upload** | ✗                            | ✓ (via Cloudflare R2)                               |
+| **AI Features**       | ✗                            | Auto-tag, Explain Code, Summarize, Prompt Optimizer |
+| **Export**            | ✗                            | JSON / ZIP                                          |
+| **Priority Support**  | ✗                            | ✓                                                   |
 
 > 💡 **Dev note:** During development, all users have access to everything. Pro gating will be enforced at launch via `user.isPro` checks and Stripe integration.
 
@@ -333,6 +334,14 @@ model ItemTag {
 ### Design Direction
 
 Modern, minimal, developer-focused. Dark mode by default. Clean typography with generous whitespace, subtle borders and shadows. Reference apps: Notion, Linear, Raycast.
+
+### Screenshots
+
+Refer to the screenshots below as a base for the dashboard UI.
+It does not have to be exact use it as a reference.
+
+- @context/screenshots/dashboard-ui.png
+- @context/screenshots/dashboard-ui-drawer.png
 
 ### Layout
 
@@ -422,15 +431,15 @@ devstash/
 
 ## 🔗 Key Links & Resources
 
-| Resource | URL |
-|---|---|
-| Next.js Docs | [nextjs.org/docs](https://nextjs.org/docs) |
-| Prisma Docs | [prisma.io/docs](https://www.prisma.io/docs) |
-| NextAuth v5 | [authjs.dev](https://authjs.dev) |
-| shadcn/ui | [ui.shadcn.com](https://ui.shadcn.com) |
-| Tailwind CSS v4 | [tailwindcss.com](https://tailwindcss.com) |
-| Neon PostgreSQL | [neon.tech/docs](https://neon.tech/docs) |
-| Cloudflare R2 | [developers.cloudflare.com/r2](https://developers.cloudflare.com/r2) |
-| Stripe Billing | [stripe.com/docs/billing](https://stripe.com/docs/billing) |
-| OpenAI API | [platform.openai.com/docs](https://platform.openai.com/docs) |
-| Lucide Icons | [lucide.dev](https://lucide.dev) |
+| Resource        | URL                                                                  |
+| --------------- | -------------------------------------------------------------------- |
+| Next.js Docs    | [nextjs.org/docs](https://nextjs.org/docs)                           |
+| Prisma Docs     | [prisma.io/docs](https://www.prisma.io/docs)                         |
+| NextAuth v5     | [authjs.dev](https://authjs.dev)                                     |
+| shadcn/ui       | [ui.shadcn.com](https://ui.shadcn.com)                               |
+| Tailwind CSS v4 | [tailwindcss.com](https://tailwindcss.com)                           |
+| Neon PostgreSQL | [neon.tech/docs](https://neon.tech/docs)                             |
+| Cloudflare R2   | [developers.cloudflare.com/r2](https://developers.cloudflare.com/r2) |
+| Stripe Billing  | [stripe.com/docs/billing](https://stripe.com/docs/billing)           |
+| OpenAI API      | [platform.openai.com/docs](https://platform.openai.com/docs)         |
+| Lucide Icons    | [lucide.dev](https://lucide.dev)                                     |

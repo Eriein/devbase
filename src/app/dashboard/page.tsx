@@ -12,7 +12,12 @@ import {
   Clock,
   Package,
 } from "lucide-react";
-import { items, collections, itemTypes } from "@/lib/mock-data";
+import { items, itemTypes } from "@/lib/mock-data";
+import { getRecentCollections, getCollectionStats } from "@/lib/db/collections";
+
+// ─── Demo user ID (matches seed) ──────────────────────────────
+// TODO: replace with session user once auth is wired up
+const DEMO_USER_EMAIL = "demo@devstash.io";
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -34,34 +39,10 @@ const iconMap: Record<
   Link: LinkIcon,
 };
 
-// ─── Derived data ─────────────────────────────────────────────
-
-const totalItems = items.length;
-const totalCollections = collections.length;
-const favoriteItems = items.filter((i) => i.isFavorite).length;
-const favoriteCollections = collections.filter((c) => c.isFavorite).length;
-
-const recentCollections = [...collections].sort(
-  (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-);
-
-const pinnedItems = items.filter((i) => i.isPinned);
-
-const recentItems = [...items]
-  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-  .slice(0, 10);
-
-const stats = [
-  { label: "Items", value: totalItems, icon: Package, color: "#3b82f6" },
-  { label: "Collections", value: totalCollections, icon: FolderOpen, color: "#8b5cf6" },
-  { label: "Favorite Items", value: favoriteItems, icon: Star, color: "#f59e0b" },
-  { label: "Favorite Collections", value: favoriteCollections, icon: Star, color: "#ec4899" },
-];
-
 // ─── Helpers ──────────────────────────────────────────────────
 
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
+function timeAgo(date: Date | string): string {
+  const diff = Date.now() - new Date(date).getTime();
   const minutes = Math.floor(diff / 60000);
   if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.floor(minutes / 60);
@@ -73,23 +54,39 @@ function getItemType(itemTypeId: string): ItemType | undefined {
   return itemTypes.find((t) => t.id === itemTypeId);
 }
 
-function getCollectionTypeIcons(collection: (typeof collections)[0]) {
-  const typeIds = [
-    ...new Set(
-      collection.itemIds
-        .map((id) => items.find((i) => i.id === id)?.itemTypeId)
-        .filter(Boolean) as string[]
-    ),
-  ];
-  return typeIds
-    .slice(0, 4)
-    .map((id) => itemTypes.find((t) => t.id === id))
-    .filter(Boolean) as ItemType[];
-}
-
 // ─── Page ─────────────────────────────────────────────────────
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  // Resolve demo user id
+  const { prisma } = await import("@/lib/prisma");
+  const demoUser = await prisma.user.findUnique({
+    where: { email: DEMO_USER_EMAIL },
+    select: { id: true },
+  });
+  const userId = demoUser?.id ?? "";
+
+  // Fetch real data
+  const [recentCollections, collectionStats] = await Promise.all([
+    userId ? getRecentCollections(userId) : [],
+    userId ? getCollectionStats(userId) : { totalCollections: 0, favoriteCollections: 0 },
+  ]);
+
+  // Mock-derived stats for items (items UI not replaced yet)
+  const totalItems = items.length;
+  const favoriteItems = items.filter((i) => i.isFavorite).length;
+
+  const stats = [
+    { label: "Items", value: totalItems, icon: Package, color: "#3b82f6" },
+    { label: "Collections", value: collectionStats.totalCollections, icon: FolderOpen, color: "#8b5cf6" },
+    { label: "Favorite Items", value: favoriteItems, icon: Star, color: "#f59e0b" },
+    { label: "Favorite Collections", value: collectionStats.favoriteCollections, icon: Star, color: "#ec4899" },
+  ];
+
+  const pinnedItems = items.filter((i) => i.isPinned);
+  const recentItems = [...items]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 10);
+
   return (
     <div className="space-y-10">
       {/* Stats */}
@@ -116,46 +113,45 @@ export default function DashboardPage() {
           </button>
         </div>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {recentCollections.map((collection) => {
-            const typeIcons = getCollectionTypeIcons(collection);
-            return (
-              <div
-                key={collection.id}
-                className="flex h-44 cursor-pointer flex-col rounded-lg border border-border bg-card p-5 transition-colors hover:bg-card/80"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-medium text-foreground">{collection.name}</h3>
-                  {collection.isFavorite && (
-                    <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" />
-                  )}
-                </div>
-                {collection.description && (
-                  <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                    {collection.description}
-                  </p>
+          {recentCollections.map((collection) => (
+            <div
+              key={collection.id}
+              className="flex h-44 cursor-pointer flex-col rounded-lg border border-border bg-card p-5 transition-colors hover:bg-card/80"
+              style={{ borderLeftWidth: "3px", borderLeftColor: collection.dominantColor }}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-medium text-foreground">{collection.name}</h3>
+                {collection.isFavorite && (
+                  <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" />
                 )}
-                <div className="mt-auto flex items-center justify-between pt-4">
-                  <div className="flex items-center gap-1.5">
-                    {typeIcons.map((type) => {
-                      const Icon = iconMap[type.icon];
-                      return Icon ? (
-                        <div
-                          key={type.id}
-                          className="rounded p-1.5"
-                          style={{ backgroundColor: type.color + "20" }}
-                        >
-                          <Icon className="size-3.5" style={{ color: type.color }} />
-                        </div>
-                      ) : null;
-                    })}
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {collection.itemIds.length} items
-                  </span>
-                </div>
               </div>
-            );
-          })}
+              {collection.description && (
+                <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                  {collection.description}
+                </p>
+              )}
+              <div className="mt-auto flex items-center justify-between pt-4">
+                <div className="flex items-center gap-1.5">
+                  {collection.typeIcons.map((type) => {
+                    const Icon = iconMap[type.icon];
+                    return Icon ? (
+                      <div
+                        key={type.id}
+                        className="rounded p-1.5"
+                        style={{ backgroundColor: type.color + "20" }}
+                        title={type.name}
+                      >
+                        <Icon className="size-3.5" style={{ color: type.color }} />
+                      </div>
+                    ) : null;
+                  })}
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {collection.itemCount} {collection.itemCount === 1 ? "item" : "items"}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 

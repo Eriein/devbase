@@ -13,14 +13,28 @@ import {
   Link as LinkIcon,
   Star,
   Clock,
-  FolderOpen,
   ChevronDown,
   Settings,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { items, collections, itemTypes, currentUser } from "@/lib/mock-data";
+import type { SidebarItemType } from "@/lib/db/item-types";
+import type { CollectionWithTypes } from "@/lib/db/collections";
+
+// ─── Types ────────────────────────────────────────────────────
+
+export interface SidebarData {
+  sidebarItemTypes: SidebarItemType[];
+  sidebarCollections: CollectionWithTypes[];
+  userName: string;
+}
+
+interface SidebarProps extends SidebarData {
+  collapsed: boolean;
+}
+
+// ─── Icon map ─────────────────────────────────────────────────
 
 const iconMap: Record<
   string,
@@ -35,30 +49,97 @@ const iconMap: Record<
   Link: LinkIcon,
 };
 
-function getItemCountByType(typeId: string): number {
-  return items.filter((item) => item.itemTypeId === typeId).length;
-}
+// ─── Helpers ──────────────────────────────────────────────────
 
-function getTypeSlug(name: string): string {
-  return name.toLowerCase() + "s";
-}
+const PRO_TYPES = new Set(["file", "image"]);
 
-const favoriteCollections = collections.filter((c) => c.isFavorite);
-const recentCollections = [...collections]
-  .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-  .slice(0, 5);
+// ─── Component ────────────────────────────────────────────────
 
-const navLinks = [
-  { label: "Favorites", icon: Star, href: "/dashboard" },
-  { label: "Recent", icon: Clock, href: "/dashboard" },
-];
-
-interface SidebarProps {
-  collapsed: boolean;
-}
-
-export function Sidebar({ collapsed }: SidebarProps) {
+export function Sidebar({
+  collapsed,
+  sidebarItemTypes,
+  sidebarCollections,
+  userName,
+}: SidebarProps) {
   const [collectionsOpen, setCollectionsOpen] = useState(true);
+
+  const initials = userName
+    ? userName.split(" ").map((n) => n[0]).join("").toUpperCase()
+    : "?";
+
+  const isDev = process.env.NODE_ENV === "development";
+  const mockFavoriteCollections: CollectionWithTypes[] = isDev
+    ? [
+        {
+          id: "mock-1",
+          name: "React Snippets",
+          description: null,
+          isFavorite: true,
+          updatedAt: new Date(),
+          itemCount: 12,
+          typeIcons: [],
+          dominantColor: "#3b82f6",
+        },
+        {
+          id: "mock-2",
+          name: "Python Scripts",
+          description: null,
+          isFavorite: true,
+          updatedAt: new Date(),
+          itemCount: 8,
+          typeIcons: [],
+          dominantColor: "#22c55e",
+        },
+      ]
+    : [];
+
+  const mockRecentCollections: CollectionWithTypes[] = isDev
+    ? [
+        {
+          id: "mock-3",
+          name: "Bash Commands",
+          description: null,
+          isFavorite: false,
+          updatedAt: new Date(),
+          itemCount: 25,
+          typeIcons: [],
+          dominantColor: "#f59e0b",
+        },
+        {
+          id: "mock-4",
+          name: "SQL Queries",
+          description: null,
+          isFavorite: false,
+          updatedAt: new Date(Date.now() - 86400000),
+          itemCount: 15,
+          typeIcons: [],
+          dominantColor: "#ef4444",
+        },
+        {
+          id: "mock-5",
+          name: "Docker Configs",
+          description: null,
+          isFavorite: false,
+          updatedAt: new Date(Date.now() - 172800000),
+          itemCount: 7,
+          typeIcons: [],
+          dominantColor: "#8b5cf6",
+        },
+      ]
+    : [];
+
+  const favoriteCollections = isDev
+    ? mockFavoriteCollections
+    : sidebarCollections
+        .filter((c) => c.isFavorite)
+        .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+        .slice(0, 5);
+
+  const recentCollections = isDev
+    ? mockRecentCollections
+    : [...sidebarCollections]
+        .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+        .slice(0, 5);
 
   return (
     <div className="flex h-full flex-col">
@@ -77,23 +158,7 @@ export function Sidebar({ collapsed }: SidebarProps) {
       {/* Scrollable content */}
       <ScrollArea className="flex-1">
         <div className={cn("py-3", collapsed ? "px-2" : "px-3")}>
-          {/* Nav links */}
-          <div className="space-y-0.5">
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-md px-2.5 py-1.5 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors",
-                  collapsed && "justify-center px-2"
-                )}
-              >
-                <link.icon className="size-4 shrink-0" />
-                {!collapsed && <span>{link.label}</span>}
-              </Link>
-            ))}
-          </div>
-
+          {/* Nav links - moved inside Collections */}
           {/* Item Types */}
           <div className="mt-6">
             {!collapsed && (
@@ -102,29 +167,25 @@ export function Sidebar({ collapsed }: SidebarProps) {
               </h3>
             )}
             <div className="space-y-0.5">
-              {itemTypes.map((type) => {
+              {sidebarItemTypes.map((type) => {
                 const Icon = iconMap[type.icon];
-                const count = getItemCountByType(type.id);
-                const isPro = type.name === "File" || type.name === "Image";
+                const isPro = PRO_TYPES.has(type.name.toLowerCase());
 
                 return (
                   <Link
                     key={type.id}
-                    href={`/items/${getTypeSlug(type.name)}`}
+                    href={`/items/${type.name.toLowerCase()}s`}
                     className={cn(
                       "flex items-center gap-3 rounded-md px-2.5 py-1.5 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors",
                       collapsed && "justify-center px-2"
                     )}
                   >
                     {Icon && (
-                      <Icon
-                        className="size-4 shrink-0"
-                        style={{ color: type.color }}
-                      />
+                      <Icon className="size-4 shrink-0" style={{ color: type.color }} />
                     )}
                     {!collapsed && (
                       <>
-                        <span className="flex-1">{type.name + "s"}</span>
+                        <span className="flex-1 capitalize">{type.name}s</span>
                         {isPro ? (
                           <span
                             className="rounded px-1.5 py-0.5 text-[10px] font-semibold leading-none"
@@ -137,7 +198,7 @@ export function Sidebar({ collapsed }: SidebarProps) {
                           </span>
                         ) : (
                           <span className="text-xs text-muted-foreground">
-                            {count}
+                            {type.itemCount}
                           </span>
                         )}
                       </>
@@ -168,7 +229,70 @@ export function Sidebar({ collapsed }: SidebarProps) {
             )}
             {collectionsOpen && (
               <div className="space-y-0.5">
-                {recentCollections.map((collection) => (
+                {/* Favorites Section */}
+                <div>
+                  <Link
+                    href="/dashboard?filter=favorites"
+                    className={cn(
+                      "flex items-center gap-3 rounded-md px-2.5 py-1.5 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors",
+                      collapsed && "justify-center px-2"
+                    )}
+                  >
+                    <Star className="size-4 shrink-0 fill-amber-400 text-amber-400" />
+                    {!collapsed && <span>Favorites</span>}
+                  </Link>
+                  {!collapsed && favoriteCollections.length > 0 && (
+                    <div className="ml-4 mt-0.5 space-y-0.5 border-l border-border pl-2">
+                      {favoriteCollections.map((collection) => (
+                        <Link
+                          key={collection.id}
+                          href={`/collections/${collection.id}`}
+                          className="flex items-center gap-3 rounded-md px-2.5 py-1 text-xs text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+                        >
+                          <span
+                            className="size-1.5 shrink-0 rounded-full"
+                            style={{ backgroundColor: collection.dominantColor }}
+                          />
+                          <span className="flex-1 truncate">{collection.name}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Recent Section */}
+                <div>
+                  <Link
+                    href="/dashboard?filter=recent"
+                    className={cn(
+                      "flex items-center gap-3 rounded-md px-2.5 py-1.5 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors",
+                      collapsed && "justify-center px-2"
+                    )}
+                  >
+                    <Clock className="size-4 shrink-0" />
+                    {!collapsed && <span>Recent</span>}
+                  </Link>
+                  {!collapsed && recentCollections.length > 0 && (
+                    <div className="ml-4 mt-0.5 space-y-0.5 border-l border-border pl-2">
+                      {recentCollections.map((collection) => (
+                        <Link
+                          key={collection.id}
+                          href={`/collections/${collection.id}`}
+                          className="flex items-center gap-3 rounded-md px-2.5 py-1 text-xs text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+                        >
+                          <span
+                            className="size-1.5 shrink-0 rounded-full"
+                            style={{ backgroundColor: collection.dominantColor }}
+                          />
+                          <span className="flex-1 truncate">{collection.name}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="my-1.5 border-t border-border" />
+                {sidebarCollections.map((collection) => (
                   <Link
                     key={collection.id}
                     href={`/collections/${collection.id}`}
@@ -177,17 +301,34 @@ export function Sidebar({ collapsed }: SidebarProps) {
                       collapsed && "justify-center px-2"
                     )}
                   >
-                    <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
+                    {/* Colored circle dot based on dominant item type */}
+                    <span
+                      className="size-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: collection.dominantColor }}
+                    />
                     {!collapsed && (
                       <>
                         <span className="flex-1 truncate">{collection.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {collection.itemIds.length}
-                        </span>
+                        {collection.isFavorite ? (
+                          <Star className="size-3 shrink-0 fill-amber-400 text-amber-400" />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            {collection.itemCount}
+                          </span>
+                        )}
                       </>
                     )}
                   </Link>
                 ))}
+                {/* View all collections link */}
+                {!collapsed && (
+                  <Link
+                    href="/collections"
+                    className="flex items-center gap-3 rounded-md px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+                  >
+                    View all collections
+                  </Link>
+                )}
               </div>
             )}
           </div>
@@ -204,16 +345,13 @@ export function Sidebar({ collapsed }: SidebarProps) {
         >
           <Avatar className="size-7">
             <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-              {currentUser.name
-                .split(" ")
-                .map((n) => n[0])
-                .join("")}
+              {initials}
             </AvatarFallback>
           </Avatar>
           {!collapsed && (
             <>
               <span className="flex-1 truncate text-sm text-sidebar-foreground">
-                {currentUser.name}
+                {userName}
               </span>
               <button className="text-muted-foreground hover:text-sidebar-foreground transition-colors">
                 <Settings className="size-4" />

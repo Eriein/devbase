@@ -18,11 +18,14 @@ export type CollectionWithTypes = {
   dominantColor: string;
 };
 
-export async function getRecentCollections(userId: string): Promise<CollectionWithTypes[]> {
+export async function getRecentCollections(
+  userId: string,
+  limit = 6
+): Promise<CollectionWithTypes[]> {
   const collections = await prisma.collection.findMany({
     where: { userId },
     orderBy: { updatedAt: "desc" },
-    take: 6,
+    take: limit,
     select: {
       id: true,
       name: true,

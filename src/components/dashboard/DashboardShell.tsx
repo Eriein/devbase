@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { Sidebar } from "@/components/dashboard/Sidebar";
+import { Sidebar, type SidebarData } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
 import {
   Sheet,
@@ -11,7 +11,16 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
-export function DashboardShell({ children }: { children: React.ReactNode }) {
+interface DashboardShellProps extends SidebarData {
+  children: React.ReactNode;
+}
+
+export function DashboardShell({
+  children,
+  sidebarItemTypes,
+  sidebarCollections,
+  userName,
+}: DashboardShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -24,6 +33,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     }
   }, [isMobile]);
 
+  const sidebarData: SidebarData = { sidebarItemTypes, sidebarCollections, userName };
+
   return (
     <div className="flex h-screen">
       {/* Desktop sidebar */}
@@ -34,7 +45,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             collapsed ? "w-14" : "w-60"
           )}
         >
-          <Sidebar collapsed={collapsed} />
+          <Sidebar collapsed={collapsed} {...sidebarData} />
         </aside>
       )}
 
@@ -43,7 +54,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetContent side="left" className="w-60 p-0 bg-sidebar">
             <SheetTitle className="sr-only">Navigation</SheetTitle>
-            <Sidebar collapsed={false} />
+            <Sidebar collapsed={false} {...sidebarData} />
           </SheetContent>
         </Sheet>
       )}

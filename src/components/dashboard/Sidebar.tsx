@@ -67,79 +67,14 @@ export function Sidebar({
     ? userName.split(" ").map((n) => n[0]).join("").toUpperCase()
     : "?";
 
-  const isDev = process.env.NODE_ENV === "development";
-  const mockFavoriteCollections: CollectionWithTypes[] = isDev
-    ? [
-        {
-          id: "mock-1",
-          name: "React Snippets",
-          description: null,
-          isFavorite: true,
-          updatedAt: new Date(),
-          itemCount: 12,
-          typeIcons: [],
-          dominantColor: "#3b82f6",
-        },
-        {
-          id: "mock-2",
-          name: "Python Scripts",
-          description: null,
-          isFavorite: true,
-          updatedAt: new Date(),
-          itemCount: 8,
-          typeIcons: [],
-          dominantColor: "#22c55e",
-        },
-      ]
-    : [];
+  const favoriteCollections = sidebarCollections
+    .filter((c) => c.isFavorite)
+    .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+    .slice(0, 5);
 
-  const mockRecentCollections: CollectionWithTypes[] = isDev
-    ? [
-        {
-          id: "mock-3",
-          name: "Bash Commands",
-          description: null,
-          isFavorite: false,
-          updatedAt: new Date(),
-          itemCount: 25,
-          typeIcons: [],
-          dominantColor: "#f59e0b",
-        },
-        {
-          id: "mock-4",
-          name: "SQL Queries",
-          description: null,
-          isFavorite: false,
-          updatedAt: new Date(Date.now() - 86400000),
-          itemCount: 15,
-          typeIcons: [],
-          dominantColor: "#ef4444",
-        },
-        {
-          id: "mock-5",
-          name: "Docker Configs",
-          description: null,
-          isFavorite: false,
-          updatedAt: new Date(Date.now() - 172800000),
-          itemCount: 7,
-          typeIcons: [],
-          dominantColor: "#8b5cf6",
-        },
-      ]
-    : [];
-
-  const favoriteCollections = isDev
-    ? mockFavoriteCollections
-    : sidebarCollections
-        .filter((c) => c.isFavorite)
-        .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
-        .slice(0, 5);
-
-  const recentCollections = isDev
-    ? mockRecentCollections
-    : [...sidebarCollections]
-        .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
-        .slice(0, 5);
+  const recentCollections = [...sidebarCollections]
+    .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+    .slice(0, 5);
 
   return (
     <div className="flex h-full flex-col">

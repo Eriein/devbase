@@ -12,17 +12,12 @@ import {
   Clock,
   Package,
 } from "lucide-react";
-import { items, itemTypes } from "@/lib/mock-data";
 import { getRecentCollections, getCollectionStats } from "@/lib/db/collections";
+import { getPinnedItems, getRecentItems, getItemStats, type DashboardItem } from "@/lib/db/items";
 
-// ─── Demo user ID (matches seed) ──────────────────────────────
+// ─── Demo user (matches seed) ─────────────────────────────────
 // TODO: replace with session user once auth is wired up
 const DEMO_USER_EMAIL = "demo@devstash.io";
-
-// ─── Types ────────────────────────────────────────────────────
-
-type ItemType = (typeof itemTypes)[0];
-type Item = (typeof items)[0];
 
 // ─── Icon map ─────────────────────────────────────────────────
 
@@ -50,14 +45,9 @@ function timeAgo(date: Date | string): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-function getItemType(itemTypeId: string): ItemType | undefined {
-  return itemTypes.find((t) => t.id === itemTypeId);
-}
-
 // ─── Page ─────────────────────────────────────────────────────
 
 export default async function DashboardPage() {
-  // Resolve demo user id
   const { prisma } = await import("@/lib/prisma");
   const demoUser = await prisma.user.findUnique({
     where: { email: DEMO_USER_EMAIL },
@@ -65,27 +55,21 @@ export default async function DashboardPage() {
   });
   const userId = demoUser?.id ?? "";
 
-  // Fetch real data
-  const [recentCollections, collectionStats] = await Promise.all([
-    userId ? getRecentCollections(userId) : [],
-    userId ? getCollectionStats(userId) : { totalCollections: 0, favoriteCollections: 0 },
-  ]);
-
-  // Mock-derived stats for items (items UI not replaced yet)
-  const totalItems = items.length;
-  const favoriteItems = items.filter((i) => i.isFavorite).length;
+  const [recentCollections, collectionStats, pinnedItems, recentItems, itemStats] =
+    await Promise.all([
+      userId ? getRecentCollections(userId) : [],
+      userId ? getCollectionStats(userId) : { totalCollections: 0, favoriteCollections: 0 },
+      userId ? getPinnedItems(userId) : [],
+      userId ? getRecentItems(userId) : [],
+      userId ? getItemStats(userId) : { totalItems: 0, favoriteItems: 0 },
+    ]);
 
   const stats = [
-    { label: "Items", value: totalItems, icon: Package, color: "#3b82f6" },
+    { label: "Items", value: itemStats.totalItems, icon: Package, color: "#3b82f6" },
     { label: "Collections", value: collectionStats.totalCollections, icon: FolderOpen, color: "#8b5cf6" },
-    { label: "Favorite Items", value: favoriteItems, icon: Star, color: "#f59e0b" },
+    { label: "Favorite Items", value: itemStats.favoriteItems, icon: Star, color: "#f59e0b" },
     { label: "Favorite Collections", value: collectionStats.favoriteCollections, icon: Star, color: "#ec4899" },
   ];
-
-  const pinnedItems = items.filter((i) => i.isPinned);
-  const recentItems = [...items]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 10);
 
   return (
     <div className="space-y-10">
@@ -155,7 +139,7 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      {/* Pinned Items */}
+      {/* Pinned Items — only shown if any exist */}
       {pinnedItems.length > 0 && (
         <section>
           <div className="mb-4 flex items-center gap-2">
@@ -163,11 +147,9 @@ export default async function DashboardPage() {
             <h2 className="text-base font-semibold text-foreground">Pinned</h2>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {pinnedItems.map((item) => {
-              const type = getItemType(item.itemTypeId);
-              const Icon = type ? iconMap[type.icon] : null;
-              return <ItemCard key={item.id} item={item} type={type} Icon={Icon} />;
-            })}
+            {pinnedItems.map((item) => (
+              <ItemCard key={item.id} item={item} />
+            ))}
           </div>
         </section>
       )}
@@ -184,11 +166,9 @@ export default async function DashboardPage() {
           </button>
         </div>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {recentItems.map((item) => {
-            const type = getItemType(item.itemTypeId);
-            const Icon = type ? iconMap[type.icon] : null;
-            return <ItemCard key={item.id} item={item} type={type} Icon={Icon} />;
-          })}
+          {recentItems.map((item) => (
+            <ItemCard key={item.id} item={item} />
+          ))}
         </div>
       </section>
     </div>
@@ -197,27 +177,21 @@ export default async function DashboardPage() {
 
 // ─── Item Card ────────────────────────────────────────────────
 
-function ItemCard({
-  item,
-  type,
-  Icon,
-}: {
-  item: Item;
-  type: ItemType | undefined;
-  Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }> | null;
-}) {
+function ItemCard({ item }: { item: DashboardItem }) {
+  const { itemType } = item;
+  const Icon = iconMap[itemType.icon];
   const previewContent = item.content ?? item.url ?? item.fileUrl ?? "";
 
   return (
     <div
       className="relative cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-colors hover:bg-card/80"
-      style={{ borderLeftWidth: "3px", borderLeftColor: type?.color ?? "#6b7280" }}
+      style={{ borderLeftWidth: "3px", borderLeftColor: itemType.color }}
     >
       <div className="p-5">
         {/* Header */}
         <div className="mb-3 flex items-start gap-2">
-          {Icon && type && (
-            <Icon className="mt-0.5 size-4 shrink-0" style={{ color: type.color }} />
+          {Icon && (
+            <Icon className="mt-0.5 size-4 shrink-0" style={{ color: itemType.color }} />
           )}
           <span className="line-clamp-1 flex-1 text-sm font-medium leading-tight text-foreground">
             {item.title}

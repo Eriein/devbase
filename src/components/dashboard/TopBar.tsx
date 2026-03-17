@@ -1,11 +1,15 @@
 import { Search, Plus, FolderPlus, PanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function TopBar() {
+interface TopBarProps {
+  onToggleSidebar: () => void;
+}
+
+export function TopBar({ onToggleSidebar }: TopBarProps) {
   return (
     <header className="grid h-14 grid-cols-3 items-center border-b border-border px-6">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon-sm">
+        <Button variant="ghost" size="icon-sm" onClick={onToggleSidebar}>
           <PanelLeft className="size-4" />
         </Button>
         <div>

@@ -12,13 +12,9 @@ import {
   Clock,
   Package,
 } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
 import { getRecentCollections, getCollectionStats } from "@/lib/db/collections";
 import { getPinnedItems, getRecentItems, getItemStats, type DashboardItem } from "@/lib/db/items";
-
-// ─── Demo user (matches seed) ─────────────────────────────────
-// TODO: replace with session user once auth is wired up
-const DEMO_USER_EMAIL = "demo@devstash.io";
 
 // ─── Icon map ─────────────────────────────────────────────────
 
@@ -49,19 +45,16 @@ function timeAgo(date: Date | string): string {
 // ─── Page ─────────────────────────────────────────────────────
 
 export default async function DashboardPage() {
-  const demoUser = await prisma.user.findUnique({
-    where: { email: DEMO_USER_EMAIL },
-    select: { id: true },
-  });
-  const userId = demoUser?.id ?? "";
+  const session = await auth();
+  const userId = session!.user!.id!;
 
   const [recentCollections, collectionStats, pinnedItems, recentItems, itemStats] =
     await Promise.all([
-      userId ? getRecentCollections(userId) : [],
-      userId ? getCollectionStats(userId) : { totalCollections: 0, favoriteCollections: 0 },
-      userId ? getPinnedItems(userId) : [],
-      userId ? getRecentItems(userId) : [],
-      userId ? getItemStats(userId) : { totalItems: 0, favoriteItems: 0 },
+      getRecentCollections(userId),
+      getCollectionStats(userId),
+      getPinnedItems(userId),
+      getRecentItems(userId),
+      getItemStats(userId),
     ]);
 
   const stats = [

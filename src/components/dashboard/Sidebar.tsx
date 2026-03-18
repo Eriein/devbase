@@ -14,11 +14,21 @@ import {
   Star,
   Clock,
   ChevronDown,
-  Settings,
+  ChevronsUpDown,
+  LogOut,
+  User,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { UserAvatar } from "@/components/UserAvatar";
+import { signOutAction } from "@/lib/actions/auth";
 import { cn } from "@/lib/utils";
 import type { SidebarItemType } from "@/lib/db/item-types";
 import type { CollectionWithTypes } from "@/lib/db/collections";
@@ -29,6 +39,7 @@ export interface SidebarData {
   sidebarItemTypes: SidebarItemType[];
   sidebarCollections: CollectionWithTypes[];
   userName: string;
+  userImage: string | null;
 }
 
 interface SidebarProps extends SidebarData {
@@ -61,12 +72,9 @@ export function Sidebar({
   sidebarItemTypes,
   sidebarCollections,
   userName,
+  userImage,
 }: SidebarProps) {
   const [collectionsOpen, setCollectionsOpen] = useState(true);
-
-  const initials = userName
-    ? userName.split(" ").map((n) => n[0]).join("").toUpperCase()
-    : "?";
 
   const sortedCollections = [...sidebarCollections].sort(
     (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
@@ -273,29 +281,52 @@ export function Sidebar({
       </ScrollArea>
 
       {/* User avatar area */}
-      <div className="border-t border-border p-3">
-        <div
-          className={cn(
-            "flex items-center gap-3",
-            collapsed && "justify-center"
-          )}
-        >
-          <Avatar className="size-7">
-            <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          {!collapsed && (
-            <>
-              <span className="flex-1 truncate text-sm text-sidebar-foreground">
-                {userName}
-              </span>
-              <button className="text-muted-foreground hover:text-sidebar-foreground transition-colors">
-                <Settings className="size-4" />
-              </button>
-            </>
-          )}
-        </div>
+      <div className="border-t border-border p-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            className={cn(
+              "flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-sidebar-accent cursor-pointer outline-none",
+              collapsed && "justify-center px-0"
+            )}
+          >
+            <UserAvatar name={userName} image={userImage} />
+            {!collapsed && (
+              <>
+                <span className="flex-1 truncate text-left text-sm text-sidebar-foreground">
+                  {userName}
+                </span>
+                <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
+              </>
+            )}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="start" sideOffset={8} className="min-w-52">
+            {/* User info header */}
+            <div className="flex items-center gap-2.5 px-1.5 py-1.5">
+              <UserAvatar name={userName} image={userImage} className="size-8" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{userName}</p>
+              </div>
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={() => (window.location.href = "/profile")}
+            >
+              <User className="size-4" />
+              Profile
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <form action={signOutAction}>
+              <DropdownMenuItem
+                onSelect={(e) => e.preventDefault()}
+              >
+                <button type="submit" className="flex w-full items-center gap-1.5">
+                  <LogOut className="size-4" />
+                  Sign out
+                </button>
+              </DropdownMenuItem>
+            </form>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

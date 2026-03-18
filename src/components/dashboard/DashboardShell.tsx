@@ -20,6 +20,7 @@ export function DashboardShell({
   sidebarItemTypes,
   sidebarCollections,
   userName,
+  userImage,
 }: DashboardShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -33,7 +34,7 @@ export function DashboardShell({
     }
   }, [isMobile]);
 
-  const sidebarData: SidebarData = { sidebarItemTypes, sidebarCollections, userName };
+  const sidebarData: SidebarData = { sidebarItemTypes, sidebarCollections, userName, userImage };
 
   return (
     <div className="flex h-screen">

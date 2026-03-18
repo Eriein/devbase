@@ -4,19 +4,24 @@
 
 <!-- Not Started|In Progress|Completed -->
 
-Not Started
+In Progress
 
 ## Feature:
 
-<!-- Name of the feature -->
+Quick Win Fixes from Audit - 2026-03-18
 
 ## Goals
 
--
+- **[src/app/dashboard/page.tsx]** Replace dynamic `await import("@/lib/prisma")` with a static top-level `import { prisma } from "@/lib/prisma"` — consistency + avoids re-resolving the module on each render
+- **[src/app/dashboard/layout.tsx]** Same dynamic Prisma import fix as above
+- **[src/lib/db/item-types.ts:19-22]** In `getSystemItemTypes`, replace `select: { id: true }` with `_count: true` on the items relation — avoids fetching row IDs just to call `.length` in JS
+- **[src/components/dashboard/Sidebar.tsx:65-78]** Pre-sort `sidebarCollections` once instead of sorting twice with identical logic for favorites and recents
 
 ## Notes
 
 <!-- Any extra notes -->
+
+All fixes are low-risk, 1–5 line changes. No auth or schema changes involved.
 
 ## History
 

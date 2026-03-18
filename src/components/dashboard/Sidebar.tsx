@@ -68,14 +68,12 @@ export function Sidebar({
     ? userName.split(" ").map((n) => n[0]).join("").toUpperCase()
     : "?";
 
-  const favoriteCollections = sidebarCollections
-    .filter((c) => c.isFavorite)
-    .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
-    .slice(0, 5);
+  const sortedCollections = [...sidebarCollections].sort(
+    (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
+  );
 
-  const recentCollections = [...sidebarCollections]
-    .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
-    .slice(0, 5);
+  const favoriteCollections = sortedCollections.filter((c) => c.isFavorite).slice(0, 5);
+  const recentCollections = sortedCollections.slice(0, 5);
 
   return (
     <div className="flex h-full flex-col">

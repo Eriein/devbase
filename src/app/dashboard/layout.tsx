@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/prisma";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { getSystemItemTypes } from "@/lib/db/item-types";
 import { getRecentCollections } from "@/lib/db/collections";
@@ -10,7 +11,6 @@ export default async function DashboardLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { prisma } = await import("@/lib/prisma");
   const demoUser = await prisma.user.findUnique({
     where: { email: DEMO_USER_EMAIL },
     select: { id: true, name: true },

@@ -16,9 +16,10 @@ export async function getSystemItemTypes(userId: string): Promise<SidebarItemTyp
       name: true,
       icon: true,
       color: true,
-      items: {
-        where: { userId },
-        select: { id: true },
+      _count: {
+        select: {
+          items: { where: { userId } },
+        },
       },
     },
   });
@@ -28,6 +29,6 @@ export async function getSystemItemTypes(userId: string): Promise<SidebarItemTyp
     name: t.name,
     icon: t.icon,
     color: t.color,
-    itemCount: t.items.length,
+    itemCount: t._count.items,
   }));
 }

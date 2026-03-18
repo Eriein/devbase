@@ -40,5 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Agent files
 .claude
 context*
+CLAUDE.md
+AGENTS.md
+.mcp.json

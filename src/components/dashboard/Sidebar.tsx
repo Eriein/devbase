@@ -16,6 +16,7 @@ import {
   ChevronDown,
   Settings,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -121,21 +122,24 @@ export function Sidebar({
                     {!collapsed && (
                       <>
                         <span className="flex-1 capitalize">{type.name}s</span>
-                        {isPro ? (
-                          <span
-                            className="rounded px-1.5 py-0.5 text-[10px] font-semibold leading-none"
-                            style={{
-                              backgroundColor: type.color + "20",
-                              color: type.color,
-                            }}
-                          >
-                            PRO
-                          </span>
-                        ) : (
+                        <span className="flex items-center gap-1.5">
+                          {isPro && (
+                            <Badge
+                              variant="outline"
+                              className="h-auto px-1.5 py-0.5 text-[10px] font-semibold"
+                              style={{
+                                backgroundColor: type.color + "20",
+                                color: type.color,
+                                borderColor: type.color + "40",
+                              }}
+                            >
+                              PRO
+                            </Badge>
+                          )}
                           <span className="text-xs text-muted-foreground">
                             {type.itemCount}
                           </span>
-                        )}
+                        </span>
                       </>
                     )}
                   </Link>

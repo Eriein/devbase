@@ -1,27 +1,22 @@
-# Current Feature: Add Pro Badge to Sidebar
+# Current Feature
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Not Started
 
 ## Feature:
 
-Add Pro Badge to Sidebar
+<!-- Name of the feature -->
 
 ## Goals
 
-- Add a PRO badge to the "Files" item type in the sidebar
-- Add a PRO badge to the "Images" item type in the sidebar
-- Use the shadcn/ui Badge component
-- Badge should be clean and subtle
-- Badge text must be "PRO" (all uppercase)
+-
 
 ## Notes
 
-- Only applies to "Files" and "Images" item types in the sidebar
-- Use the existing shadcn/ui Badge component (install if not already present)
+<!-- Any extra notes -->
 
 ## History
 
@@ -37,3 +32,4 @@ Add Pro Badge to Sidebar
 - Dashboard Collections — Real Data: created src/lib/db/collections.ts with getRecentCollections and getCollectionStats; converted dashboard page to async server component; collections grid now uses real Neon DB data with dominant type border color and type icons; collection/favorite stats from DB
 - Dashboard Items — Real Data: created src/lib/db/items.ts with getPinnedItems, getRecentItems, getItemStats; dashboard page fully migrated off mock-data.ts; all four stat cards now from DB; pinned section hidden when empty
 - Sidebar stats - Real Data and Sidebar Favorites & Recent: moved favorites and recent links inside collapsible Collections section; added favorite and recent collections displayed below their respective headers with collection items
+- Add Pro Badge to Sidebar: installed shadcn/ui Badge component; replaced inline span with Badge (variant="outline") on Files and Images item types; badge uses type color for background/border; item count now always visible alongside the PRO badge

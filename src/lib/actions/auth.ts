@@ -5,14 +5,22 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { signIn, signOut } from "@/auth";
 import { AuthError } from "next-auth";
-import { generateVerificationToken } from "@/lib/tokens";
-import { sendVerificationEmail } from "@/lib/email";
+import { generateVerificationToken, generatePasswordResetToken, validatePasswordResetToken } from "@/lib/tokens";
+import { sendVerificationEmail, sendPasswordResetEmail } from "@/lib/email";
 
 // ─── Types ────────────────────────────────────────────────────
 
 export type AuthState = {
   error?: string;
 };
+
+// ─── Pure Validation ─────────────────────────────────────────
+
+function validatePassword(password: string, confirmPassword: string): string | null {
+  if (password !== confirmPassword) return "Passwords do not match";
+  if (password.length < 8) return "Password must be at least 8 characters";
+  return null;
+}
 
 // ─── Sign Out ─────────────────────────────────────────────────
 
@@ -50,6 +58,64 @@ export async function signInWithGitHub(callbackUrl: string) {
   await signIn("github", { redirectTo: callbackUrl });
 }
 
+// ─── Forgot Password ─────────────────────────────────────────
+
+export async function forgotPassword(
+  _prevState: AuthState,
+  formData: FormData
+): Promise<AuthState & { success?: boolean }> {
+  const email = formData.get("email") as string;
+
+  if (!email) {
+    return { error: "Email is required" };
+  }
+
+  // Always show success — prevents user enumeration
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (user?.password) {
+    const token = await generatePasswordResetToken(email);
+    await sendPasswordResetEmail(email, token);
+  }
+
+  return { success: true };
+}
+
+// ─── Reset Password ──────────────────────────────────────────
+
+export async function resetPassword(
+  _prevState: AuthState,
+  formData: FormData
+): Promise<AuthState & { success?: boolean }> {
+  const token = formData.get("token") as string;
+  const password = formData.get("password") as string;
+  const confirmPassword = formData.get("confirmPassword") as string;
+
+  if (!token || !password || !confirmPassword) {
+    return { error: "All fields are required" };
+  }
+
+  const passwordError = validatePassword(password, confirmPassword);
+  if (passwordError) return { error: passwordError };
+
+  const result = await validatePasswordResetToken(token);
+
+  if ("error" in result) {
+    return { error: result.error };
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 12);
+
+  await prisma.user.update({
+    where: { email: result.email },
+    data: { password: hashedPassword },
+  });
+
+  redirect("/sign-in?reset=true");
+}
+
 // ─── Register ─────────────────────────────────────────────────
 
 export async function register(
@@ -65,13 +131,8 @@ export async function register(
     return { error: "All fields are required" };
   }
 
-  if (password !== confirmPassword) {
-    return { error: "Passwords do not match" };
-  }
-
-  if (password.length < 8) {
-    return { error: "Password must be at least 8 characters" };
-  }
+  const passwordError = validatePassword(password, confirmPassword);
+  if (passwordError) return { error: passwordError };
 
   const existingUser = await prisma.user.findUnique({
     where: { email },

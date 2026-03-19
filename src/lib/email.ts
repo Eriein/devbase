@@ -30,3 +30,30 @@ export async function sendVerificationEmail(email: string, token: string) {
     `,
   });
 }
+
+export async function sendPasswordResetEmail(email: string, token: string) {
+  const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`;
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: email,
+    subject: "Reset your DevStash password",
+    html: `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
+        <h2 style="margin: 0 0 16px;">Reset your password</h2>
+        <p style="color: #666; line-height: 1.6;">
+          We received a request to reset your password. Click the button below to choose a new one.
+        </p>
+        <a
+          href="${resetUrl}"
+          style="display: inline-block; margin: 24px 0; padding: 12px 32px; background: #18181b; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 500;"
+        >
+          Reset password
+        </a>
+        <p style="color: #999; font-size: 13px; line-height: 1.5;">
+          This link expires in 1 hour. If you didn't request a password reset, you can ignore this email.
+        </p>
+      </div>
+    `,
+  });
+}

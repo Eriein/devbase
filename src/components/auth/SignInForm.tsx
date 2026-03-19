@@ -19,6 +19,7 @@ export function SignInForm() {
   const verify = searchParams.get("verify") === "true";
   const verified = searchParams.get("verified") === "true";
   const registered = searchParams.get("registered") === "true";
+  const reset = searchParams.get("reset") === "true";
 
   const toastShown = useRef(false);
   useEffect(() => {
@@ -51,6 +52,12 @@ export function SignInForm() {
       {registered && (
         <div className="rounded-lg border border-green-500/30 bg-green-500/5 px-3 py-2.5 text-sm text-green-400">
           Account created successfully! You can now sign in.
+        </div>
+      )}
+
+      {reset && (
+        <div className="rounded-lg border border-green-500/30 bg-green-500/5 px-3 py-2.5 text-sm text-green-400">
+          Password reset successfully! You can now sign in with your new password.
         </div>
       )}
 
@@ -101,9 +108,17 @@ export function SignInForm() {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="password" className="text-xs text-muted-foreground">
-            Password
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className="text-xs text-muted-foreground">
+              Password
+            </Label>
+            <Link
+              href="/forgot-password"
+              className="text-xs text-muted-foreground underline decoration-muted-foreground/30 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <Input
             id="password"
             name="password"

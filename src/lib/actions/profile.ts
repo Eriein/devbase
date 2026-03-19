@@ -76,15 +76,22 @@ export async function deleteAccount(
   const session = await auth();
   if (!session?.user?.id) return { error: "Not authenticated" };
 
-  const password = formData.get("password") as string;
-  if (!password) return { error: "Password is required" };
-
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { password: true },
   });
 
-  if (!user?.password) return { error: "Account does not use password authentication" };
+  if (!user?.password) {
+    await prisma.user.delete({
+      where: { id: session.user.id },
+    });
+
+    await signOut({ redirectTo: "/sign-in" });
+    redirect("/sign-in");
+  }
+
+  const password = formData.get("password") as string;
+  if (!password) return { error: "Password is required" };
 
   const isValid = await bcrypt.compare(password, user.password);
   if (!isValid) return { error: "Incorrect password" };

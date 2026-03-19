@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { deleteAccount } from "@/lib/actions/profile";
 
-export function DeleteAccountDialog() {
+export function DeleteAccountDialog({ hasPassword }: { hasPassword: boolean }) {
   const [open, setOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
   const [password, setPassword] = useState("");
@@ -64,19 +64,21 @@ export function DeleteAccountDialog() {
         )}
 
         <div className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="delete-password" className="text-xs text-muted-foreground">
-              Enter your password
-            </Label>
-            <Input
-              id="delete-password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              className="h-9 bg-background/50"
-            />
-          </div>
+          {hasPassword && (
+            <div className="space-y-1.5">
+              <Label htmlFor="delete-password" className="text-xs text-muted-foreground">
+                Enter your password
+              </Label>
+              <Input
+                id="delete-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                className="h-9 bg-background/50"
+              />
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label htmlFor="confirm-delete" className="text-xs text-muted-foreground">
               Type <span className="font-mono font-semibold text-foreground">DELETE</span> to confirm
@@ -104,7 +106,7 @@ export function DeleteAccountDialog() {
             variant="destructive"
             size="sm"
             onClick={handleDelete}
-            disabled={!password || !isConfirmed || pending}
+            disabled={(hasPassword && !password) || !isConfirmed || pending}
           >
             {pending ? "Deleting..." : "Delete my account"}
           </Button>

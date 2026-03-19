@@ -197,7 +197,7 @@ export default async function ProfilePage() {
             cannot be undone.
           </p>
           <div className="mt-4">
-            <DeleteAccountDialog />
+            <DeleteAccountDialog hasPassword={!!user.password} />
           </div>
         </div>
       </section>

@@ -16,15 +16,16 @@ import {
 export function SignInForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
-  const registered = searchParams.get("registered") === "true";
+  const verify = searchParams.get("verify") === "true";
+  const verified = searchParams.get("verified") === "true";
 
   const toastShown = useRef(false);
   useEffect(() => {
-    if (registered && !toastShown.current) {
+    if (verified && !toastShown.current) {
       toastShown.current = true;
-      toast.success("Account created successfully. Sign in to continue.");
+      toast.success("Email verified! You can now sign in.");
     }
-  }, [registered]);
+  }, [verified]);
 
   const [state, formAction, pending] = useActionState<AuthState, FormData>(
     signInWithCredentials,
@@ -39,6 +40,12 @@ export function SignInForm() {
           Sign in to your account
         </p>
       </div>
+
+      {verify && (
+        <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 px-3 py-2.5 text-sm text-blue-400">
+          Check your email for a verification link. Once verified, you can sign in.
+        </div>
+      )}
 
       {/* GitHub OAuth */}
       <form action={() => signInWithGitHub(callbackUrl)}>

@@ -5,6 +5,8 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { signIn, signOut } from "@/auth";
 import { AuthError } from "next-auth";
+import { generateVerificationToken } from "@/lib/tokens";
+import { sendVerificationEmail } from "@/lib/email";
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -32,6 +34,9 @@ export async function signInWithCredentials(
     });
   } catch (error) {
     if (error instanceof AuthError) {
+      if ("code" in error && error.code === "EMAIL_NOT_VERIFIED") {
+        return { error: "Please verify your email before signing in. Check your inbox." };
+      }
       return { error: "Invalid email or password" };
     }
     // signIn redirects throw a NEXT_REDIRECT error — rethrow it
@@ -82,5 +87,8 @@ export async function register(
     data: { name, email, password: hashedPassword },
   });
 
-  redirect("/sign-in?registered=true");
+  const token = await generateVerificationToken(email);
+  await sendVerificationEmail(email, token);
+
+  redirect("/sign-in?verify=true");
 }

@@ -18,6 +18,7 @@ export function SignInForm() {
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
   const verify = searchParams.get("verify") === "true";
   const verified = searchParams.get("verified") === "true";
+  const registered = searchParams.get("registered") === "true";
 
   const toastShown = useRef(false);
   useEffect(() => {
@@ -44,6 +45,12 @@ export function SignInForm() {
       {verify && (
         <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 px-3 py-2.5 text-sm text-blue-400">
           Check your email for a verification link. Once verified, you can sign in.
+        </div>
+      )}
+
+      {registered && (
+        <div className="rounded-lg border border-green-500/30 bg-green-500/5 px-3 py-2.5 text-sm text-green-400">
+          Account created successfully! You can now sign in.
         </div>
       )}
 

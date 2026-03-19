@@ -83,12 +83,22 @@ export async function register(
 
   const hashedPassword = await bcrypt.hash(password, 12);
 
+  const emailVerificationEnabled = process.env.ENABLE_EMAIL_VERIFICATION === "true";
+
   await prisma.user.create({
-    data: { name, email, password: hashedPassword },
+    data: {
+      name,
+      email,
+      password: hashedPassword,
+      ...(!emailVerificationEnabled && { emailVerified: new Date() }),
+    },
   });
 
-  const token = await generateVerificationToken(email);
-  await sendVerificationEmail(email, token);
+  if (emailVerificationEnabled) {
+    const token = await generateVerificationToken(email);
+    await sendVerificationEmail(email, token);
+    redirect("/sign-in?verify=true");
+  }
 
-  redirect("/sign-in?verify=true");
+  redirect("/sign-in?registered=true");
 }

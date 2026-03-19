@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -20,14 +20,52 @@ export function SignInForm() {
   const verified = searchParams.get("verified") === "true";
   const registered = searchParams.get("registered") === "true";
   const reset = searchParams.get("reset") === "true";
+  const resend = searchParams.get("resend") === "true";
 
   const toastShown = useRef(false);
+  const [resendEmail, setResendEmail] = useState("");
+  const [resendPending, setResendPending] = useState(false);
+
   useEffect(() => {
     if (verified && !toastShown.current) {
       toastShown.current = true;
       toast.success("Email verified! You can now sign in.");
     }
   }, [verified]);
+
+  useEffect(() => {
+    if (resend && !toastShown.current) {
+      toastShown.current = true;
+      toast.success("Verification email sent! Check your inbox.");
+    }
+  }, [resend]);
+
+  const handleResendVerification = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!resendEmail) return;
+
+    setResendPending(true);
+    try {
+      const response = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: resendEmail }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.error || "Failed to send verification email");
+      } else {
+        toast.success("Verification email sent! Check your inbox.");
+        setResendEmail("");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setResendPending(false);
+    }
+  };
 
   const [state, formAction, pending] = useActionState<AuthState, FormData>(
     signInWithCredentials,
@@ -44,8 +82,22 @@ export function SignInForm() {
       </div>
 
       {verify && (
-        <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 px-3 py-2.5 text-sm text-blue-400">
-          Check your email for a verification link. Once verified, you can sign in.
+        <div className="space-y-3 rounded-lg border border-blue-500/30 bg-blue-500/5 px-3 py-2.5">
+          <p className="text-sm text-blue-400">
+            Check your email for a verification link. Once verified, you can sign in.
+          </p>
+          <form onSubmit={handleResendVerification} className="flex gap-2">
+            <Input
+              type="email"
+              placeholder="Enter email to resend"
+              value={resendEmail}
+              onChange={(e) => setResendEmail(e.target.value)}
+              className="h-8 text-xs bg-background/50"
+            />
+            <Button type="submit" size="sm" variant="outline" disabled={resendPending || !resendEmail} className="h-8 text-xs">
+              {resendPending ? "Sending..." : "Resend"}
+            </Button>
+          </form>
         </div>
       )}
 

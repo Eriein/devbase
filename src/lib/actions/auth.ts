@@ -7,6 +7,7 @@ import { signIn, signOut } from "@/auth";
 import { AuthError } from "next-auth";
 import { generateVerificationToken, generatePasswordResetToken, validatePasswordResetToken } from "@/lib/tokens";
 import { sendVerificationEmail, sendPasswordResetEmail } from "@/lib/email";
+import { ratelimit, extractIPFromHeaders, buildRateLimitError } from "@/lib/rate-limit";
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -42,12 +43,16 @@ export async function signInWithCredentials(
     });
   } catch (error) {
     if (error instanceof AuthError) {
-      if ("code" in error && error.code === "EMAIL_NOT_VERIFIED") {
-        return { error: "Please verify your email before signing in. Check your inbox." };
+      if ("code" in error) {
+        if (error.code === "EMAIL_NOT_VERIFIED") {
+          return { error: "Please verify your email before signing in. Check your inbox." };
+        }
+        if (error.code === "RATE_LIMIT_EXCEEDED") {
+          return { error: "Too many login attempts. Please try again in 15 minutes." };
+        }
       }
       return { error: "Invalid email or password" };
     }
-    // signIn redirects throw a NEXT_REDIRECT error — rethrow it
     throw error;
   }
 
@@ -64,13 +69,21 @@ export async function forgotPassword(
   _prevState: AuthState,
   formData: FormData
 ): Promise<AuthState & { success?: boolean }> {
+  const ip = await extractIPFromHeaders();
+
+  const { success, reset } = await ratelimit.forgotPassword.limit(ip);
+
+  if (!success) {
+    const minutesUntilReset = Math.ceil((reset - Date.now()) / 60000);
+    return buildRateLimitError(ip, minutesUntilReset * 60) as AuthState & { success?: boolean };
+  }
+
   const email = formData.get("email") as string;
 
   if (!email) {
     return { error: "Email is required" };
   }
 
-  // Always show success — prevents user enumeration
   const user = await prisma.user.findUnique({
     where: { email },
   });
@@ -89,6 +102,15 @@ export async function resetPassword(
   _prevState: AuthState,
   formData: FormData
 ): Promise<AuthState & { success?: boolean }> {
+  const ip = await extractIPFromHeaders();
+
+  const { success, reset } = await ratelimit.resetPassword.limit(ip);
+
+  if (!success) {
+    const minutesUntilReset = Math.ceil((reset - Date.now()) / 60000);
+    return buildRateLimitError(ip, minutesUntilReset * 60) as AuthState & { success?: boolean };
+  }
+
   const token = formData.get("token") as string;
   const password = formData.get("password") as string;
   const confirmPassword = formData.get("confirmPassword") as string;
@@ -162,4 +184,43 @@ export async function register(
   }
 
   redirect("/sign-in?registered=true");
+}
+
+// ─── Resend Verification ─────────────────────────────────────
+
+export async function resendVerification(
+  _prevState: AuthState,
+  formData: FormData
+): Promise<AuthState & { success?: boolean }> {
+  const ip = await extractIPFromHeaders();
+
+  const { success, reset } = await ratelimit.resendVerification.limit(ip);
+
+  if (!success) {
+    const minutesUntilReset = Math.ceil((reset - Date.now()) / 60000);
+    return buildRateLimitError(ip, minutesUntilReset * 60) as AuthState & { success?: boolean };
+  }
+
+  const email = formData.get("email") as string;
+
+  if (!email) {
+    return { error: "Email is required" };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (!user) {
+    return { success: true };
+  }
+
+  if (user.emailVerified) {
+    return { success: true };
+  }
+
+  const token = await generateVerificationToken(email);
+  await sendVerificationEmail(email, token);
+
+  return { success: true };
 }

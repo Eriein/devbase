@@ -3,8 +3,21 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { generateVerificationToken } from "@/lib/tokens";
 import { sendVerificationEmail } from "@/lib/email";
+import { ratelimit, extractIP, createRateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const ip = extractIP(request as never);
+
+  const { success, reset } = await ratelimit.register.limit(ip);
+
+  if (!success) {
+    const secondsUntilReset = Math.ceil((reset - Date.now()) / 1000);
+    return createRateLimitResponse(
+      "Too many registration attempts. Please try again later.",
+      secondsUntilReset
+    );
+  }
+
   try {
     const body = await request.json();
     const { name, email, password, confirmPassword } = body;

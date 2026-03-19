@@ -4,9 +4,24 @@ import GitHub from "next-auth/providers/github";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { headers } from "next/headers";
+import { ratelimit } from "@/lib/rate-limit";
 
 class EmailNotVerifiedError extends CredentialsSignin {
   code = "EMAIL_NOT_VERIFIED";
+}
+
+class RateLimitExceededError extends CredentialsSignin {
+  code = "RATE_LIMIT_EXCEEDED";
+}
+
+async function getClientIP(): Promise<string> {
+  const headersList = await headers();
+  const forwarded = headersList.get("x-forwarded-for");
+  if (forwarded) {
+    return forwarded.split(",")[0]!.trim();
+  }
+  return "127.0.0.1";
 }
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
@@ -27,6 +42,15 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         const password = credentials?.password as string | undefined;
 
         if (!email || !password) return null;
+
+        const ip = await getClientIP();
+        const identifier = `${ip}:${email}`;
+
+        const { success } = await ratelimit.login.limit(identifier);
+
+        if (!success) {
+          throw new RateLimitExceededError();
+        }
 
         const user = await prisma.user.findUnique({
           where: { email },

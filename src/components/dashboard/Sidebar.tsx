@@ -309,22 +309,18 @@ export function Sidebar({
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onSelect={() => (window.location.href = "/profile")}
+              onClick={() => (window.location.href = "/profile")}
             >
               <User className="size-4" />
               Profile
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <form action={signOutAction}>
-              <DropdownMenuItem
-                onSelect={(e) => e.preventDefault()}
-              >
-                <button type="submit" className="flex w-full items-center gap-1.5">
-                  <LogOut className="size-4" />
-                  Sign out
-                </button>
-              </DropdownMenuItem>
-            </form>
+            <DropdownMenuItem
+              onClick={() => signOutAction()}
+            >
+              <LogOut className="size-4" />
+              Sign out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

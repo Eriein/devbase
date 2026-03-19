@@ -5,11 +5,15 @@ const TOKEN_EXPIRY_HOURS = 24;
 const PASSWORD_RESET_EXPIRY_HOURS = 1;
 const PASSWORD_RESET_PREFIX = "password-reset:";
 
+function hashToken(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
 export async function generateVerificationToken(email: string) {
   const token = crypto.randomBytes(32).toString("hex");
+  const hashedToken = hashToken(token);
   const expires = new Date(Date.now() + TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
 
-  // Delete any existing tokens for this email
   await prisma.verificationToken.deleteMany({
     where: { identifier: email },
   });
@@ -17,7 +21,7 @@ export async function generateVerificationToken(email: string) {
   await prisma.verificationToken.create({
     data: {
       identifier: email,
-      token,
+      hashedToken,
       expires,
     },
   });
@@ -26,22 +30,21 @@ export async function generateVerificationToken(email: string) {
 }
 
 export async function validateVerificationToken(token: string) {
+  const hashedToken = hashToken(token);
   const record = await prisma.verificationToken.findUnique({
-    where: { token },
+    where: { hashedToken },
   });
 
   if (!record) return { error: "Invalid verification link." };
   if (record.expires < new Date()) return { error: "Verification link has expired." };
 
-  // Mark user as verified
   await prisma.user.update({
     where: { email: record.identifier },
     data: { emailVerified: new Date() },
   });
 
-  // Delete the used token
   await prisma.verificationToken.delete({
-    where: { token },
+    where: { hashedToken },
   });
 
   return { email: record.identifier };
@@ -51,10 +54,10 @@ export async function validateVerificationToken(token: string) {
 
 export async function generatePasswordResetToken(email: string) {
   const token = crypto.randomBytes(32).toString("hex");
+  const hashedToken = hashToken(token);
   const expires = new Date(Date.now() + PASSWORD_RESET_EXPIRY_HOURS * 60 * 60 * 1000);
   const identifier = `${PASSWORD_RESET_PREFIX}${email}`;
 
-  // Delete any existing reset tokens for this email
   await prisma.verificationToken.deleteMany({
     where: { identifier },
   });
@@ -62,7 +65,7 @@ export async function generatePasswordResetToken(email: string) {
   await prisma.verificationToken.create({
     data: {
       identifier,
-      token,
+      hashedToken,
       expires,
     },
   });
@@ -71,8 +74,9 @@ export async function generatePasswordResetToken(email: string) {
 }
 
 export async function validatePasswordResetToken(token: string) {
+  const hashedToken = hashToken(token);
   const record = await prisma.verificationToken.findUnique({
-    where: { token },
+    where: { hashedToken },
   });
 
   if (!record) return { error: "Invalid reset link." };
@@ -81,9 +85,8 @@ export async function validatePasswordResetToken(token: string) {
 
   const email = record.identifier.slice(PASSWORD_RESET_PREFIX.length);
 
-  // Delete the used token
   await prisma.verificationToken.delete({
-    where: { token },
+    where: { hashedToken },
   });
 
   return { email };

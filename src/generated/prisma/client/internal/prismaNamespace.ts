@@ -1239,7 +1239,7 @@ export type SessionScalarFieldEnum = (typeof SessionScalarFieldEnum)[keyof typeo
 
 export const VerificationTokenScalarFieldEnum = {
   identifier: 'identifier',
-  token: 'token',
+  hashedToken: 'hashedToken',
   expires: 'expires'
 } as const
 

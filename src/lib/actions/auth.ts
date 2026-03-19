@@ -23,6 +23,20 @@ function validatePassword(password: string, confirmPassword: string): string | n
   return null;
 }
 
+function calculateRateLimitResetSeconds(resetTimestamp: number): number {
+  return Math.ceil((resetTimestamp - Date.now()) / 60000) * 60;
+}
+
+function shouldSendPasswordReset(user: { password: string | null } | null): boolean {
+  return !!user?.password;
+}
+
+function shouldResendVerification(
+  user: { emailVerified: Date | null } | null
+): boolean {
+  return !user || !user.emailVerified;
+}
+
 // ─── Sign Out ─────────────────────────────────────────────────
 
 export async function signOutAction() {
@@ -74,8 +88,8 @@ export async function forgotPassword(
   const { success, reset } = await ratelimit.forgotPassword.limit(ip);
 
   if (!success) {
-    const minutesUntilReset = Math.ceil((reset - Date.now()) / 60000);
-    return buildRateLimitError(ip, minutesUntilReset * 60) as AuthState & { success?: boolean };
+    const secondsUntilReset = calculateRateLimitResetSeconds(reset);
+    return buildRateLimitError(ip, secondsUntilReset) as AuthState & { success?: boolean };
   }
 
   const email = formData.get("email") as string;
@@ -88,7 +102,7 @@ export async function forgotPassword(
     where: { email },
   });
 
-  if (user?.password) {
+  if (shouldSendPasswordReset(user)) {
     const token = await generatePasswordResetToken(email);
     await sendPasswordResetEmail(email, token);
   }
@@ -107,8 +121,8 @@ export async function resetPassword(
   const { success, reset } = await ratelimit.resetPassword.limit(ip);
 
   if (!success) {
-    const minutesUntilReset = Math.ceil((reset - Date.now()) / 60000);
-    return buildRateLimitError(ip, minutesUntilReset * 60) as AuthState & { success?: boolean };
+    const secondsUntilReset = calculateRateLimitResetSeconds(reset);
+    return buildRateLimitError(ip, secondsUntilReset) as AuthState & { success?: boolean };
   }
 
   const token = formData.get("token") as string;
@@ -129,6 +143,17 @@ export async function resetPassword(
   }
 
   const hashedPassword = await bcrypt.hash(password, 12);
+
+  const user = await prisma.user.findUnique({
+    where: { email: result.email },
+    select: { id: true },
+  });
+
+  if (user) {
+    await prisma.session.deleteMany({
+      where: { userId: user.id },
+    });
+  }
 
   await prisma.user.update({
     where: { email: result.email },
@@ -179,7 +204,12 @@ export async function register(
 
   if (emailVerificationEnabled) {
     const token = await generateVerificationToken(email);
-    await sendVerificationEmail(email, token);
+    try {
+      await sendVerificationEmail(email, token);
+    } catch (error) {
+      console.error("Failed to send verification email:", error);
+      return { error: "Account created but failed to send verification email. Please try resending it." };
+    }
     redirect("/sign-in?verify=true");
   }
 
@@ -197,8 +227,8 @@ export async function resendVerification(
   const { success, reset } = await ratelimit.resendVerification.limit(ip);
 
   if (!success) {
-    const minutesUntilReset = Math.ceil((reset - Date.now()) / 60000);
-    return buildRateLimitError(ip, minutesUntilReset * 60) as AuthState & { success?: boolean };
+    const secondsUntilReset = calculateRateLimitResetSeconds(reset);
+    return buildRateLimitError(ip, secondsUntilReset) as AuthState & { success?: boolean };
   }
 
   const email = formData.get("email") as string;
@@ -211,11 +241,7 @@ export async function resendVerification(
     where: { email },
   });
 
-  if (!user) {
-    return { success: true };
-  }
-
-  if (user.emailVerified) {
+  if (!shouldResendVerification(user)) {
     return { success: true };
   }
 

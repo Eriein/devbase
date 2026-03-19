@@ -28,6 +28,10 @@ function validatePasswords(
   return null;
 }
 
+function isOAuthUser(user: { password: string | null } | null): boolean {
+  return !user?.password;
+}
+
 // ─── Change Password ─────────────────────────────────────────
 
 export async function changePassword(
@@ -58,6 +62,10 @@ export async function changePassword(
   const isValid = await bcrypt.compare(currentPassword, user.password);
   if (!isValid) return { error: "Current password is incorrect" };
 
+  await prisma.session.deleteMany({
+    where: { userId: session.user.id },
+  });
+
   const hashedPassword = await bcrypt.hash(newPassword, 12);
   await prisma.user.update({
     where: { id: session.user.id },
@@ -81,7 +89,7 @@ export async function deleteAccount(
     select: { password: true },
   });
 
-  if (!user?.password) {
+  if (isOAuthUser(user)) {
     await prisma.user.delete({
       where: { id: session.user.id },
     });
@@ -93,7 +101,7 @@ export async function deleteAccount(
   const password = formData.get("password") as string;
   if (!password) return { error: "Password is required" };
 
-  const isValid = await bcrypt.compare(password, user.password);
+  const isValid = await bcrypt.compare(password, user!.password!);
   if (!isValid) return { error: "Incorrect password" };
 
   await prisma.user.delete({

@@ -53,21 +53,13 @@ async function main() {
 
   const user = await prisma.user.upsert({
     where: { email: "demo@devstash.io" },
-    update: {},
+    update: { password: hashedPassword },
     create: {
       email: "demo@devstash.io",
       name: "Demo User",
       isPro: false,
       emailVerified: new Date(),
-      // Store hashed password in an Account record for credentials provider
-      accounts: {
-        create: {
-          type: "credentials",
-          provider: "credentials",
-          providerAccountId: "demo@devstash.io",
-          access_token: hashedPassword,
-        },
-      },
+      password: hashedPassword,
     },
   });
   console.log(`  Upserted user: ${user.email}`);

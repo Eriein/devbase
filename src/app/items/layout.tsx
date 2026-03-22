@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { ItemDrawerProvider } from "@/components/items/ItemDrawerProvider";
 import { getSystemItemTypes } from "@/lib/db/item-types";
 import { getRecentCollections } from "@/lib/db/collections";
 
@@ -26,7 +27,7 @@ export default async function ItemsLayout({
       userName={session.user.name ?? ""}
       userImage={session.user.image ?? null}
     >
-      {children}
+      <ItemDrawerProvider>{children}</ItemDrawerProvider>
     </DashboardShell>
   );
 }

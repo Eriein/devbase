@@ -37,7 +37,7 @@ const itemSelect = {
   },
 } as const;
 
-function mapItem(raw: {
+export function mapItem(raw: {
   id: string;
   title: string;
   contentType: string;
@@ -94,6 +94,68 @@ export async function getItemTypeBySlug(slug: string) {
     select: { id: true, name: true, icon: true, color: true },
   });
 }
+
+// ─── Full detail (for drawer) ────────────────────────────────
+
+export type ItemDetail = DashboardItem & {
+  description: string | null;
+  language: string | null;
+  fileName: string | null;
+  fileSize: number | null;
+  createdAt: Date;
+  collections: { id: string; name: string }[];
+};
+
+const itemDetailSelect = {
+  ...itemSelect,
+  description: true,
+  language: true,
+  fileName: true,
+  fileSize: true,
+  createdAt: true,
+  collections: {
+    select: { collection: { select: { id: true, name: true } } },
+  },
+} as const;
+
+export function mapItemDetail(raw: {
+  id: string;
+  title: string;
+  contentType: string;
+  content: string | null;
+  fileUrl: string | null;
+  url: string | null;
+  isFavorite: boolean;
+  isPinned: boolean;
+  updatedAt: Date;
+  description: string | null;
+  language: string | null;
+  fileName: string | null;
+  fileSize: number | null;
+  createdAt: Date;
+  itemType: { id: string; name: string; icon: string; color: string };
+  tags: { tag: { id: string; name: string } }[];
+  collections: { collection: { id: string; name: string } }[];
+}): ItemDetail {
+  return {
+    ...raw,
+    tags: raw.tags.map((t) => t.tag),
+    collections: raw.collections.map((c) => c.collection),
+  };
+}
+
+export async function getItemById(
+  userId: string,
+  itemId: string
+): Promise<ItemDetail | null> {
+  const row = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    select: itemDetailSelect,
+  });
+  return row ? mapItemDetail(row) : null;
+}
+
+// ─── Stats ───────────────────────────────────────────────────
 
 export async function getItemStats(userId: string) {
   const [totalItems, favoriteItems] = await Promise.all([

@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Code,
   Sparkles,
@@ -10,6 +12,7 @@ import {
   Star,
 } from "lucide-react";
 import type { DashboardItem } from "@/lib/db/items";
+import { useItemDrawer } from "./ItemDrawerProvider";
 
 const iconMap: Record<
   string,
@@ -34,6 +37,7 @@ function timeAgo(date: Date | string): string {
 }
 
 export function ItemCard({ item }: { item: DashboardItem }) {
+  const { openDrawer } = useItemDrawer();
   const { itemType } = item;
   const Icon = iconMap[itemType.icon];
   const previewContent = item.content ?? item.url ?? item.fileUrl ?? "";
@@ -42,6 +46,7 @@ export function ItemCard({ item }: { item: DashboardItem }) {
     <div
       className="relative cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-colors hover:bg-card/80"
       style={{ borderLeftWidth: "3px", borderLeftColor: itemType.color }}
+      onClick={() => openDrawer(item.id)}
     >
       <div className="p-5">
         {/* Header */}

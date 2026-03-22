@@ -86,7 +86,7 @@ export function Sidebar({
   return (
     <div className="flex h-full flex-col">
       {/* Logo */}
-      <div className="flex h-14 items-center gap-2 border-b border-border px-4">
+      <Link href="/dashboard" className="flex h-14 items-center gap-2 border-b border-border px-4 transition-colors hover:bg-muted/50">
         <div className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
           <Code2 className="size-4" />
         </div>
@@ -95,7 +95,7 @@ export function Sidebar({
             DevStash
           </span>
         )}
-      </div>
+      </Link>
 
       {/* Scrollable content */}
       <ScrollArea className="flex-1">

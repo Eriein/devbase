@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CodeEditor } from "@/components/items/CodeEditor";
+import { MarkdownEditor } from "@/components/items/MarkdownEditor";
 import {
   Star,
   Pin,
@@ -77,6 +78,11 @@ function showLanguage(typeName: string) {
 /** Types that get Monaco code editor instead of a plain textarea */
 function isCodeType(typeName: string) {
   return ["snippet", "command"].includes(typeName.toLowerCase());
+}
+
+/** Types that get the markdown editor instead of a plain textarea */
+function isMarkdownType(typeName: string) {
+  return ["note", "prompt"].includes(typeName.toLowerCase());
 }
 
 function showUrl(typeName: string) {
@@ -505,6 +511,15 @@ export function ItemDrawer({ itemId, open, onClose }: ItemDrawerProps) {
                           )
                         }
                       />
+                    ) : isMarkdownType(item.itemType.name) ? (
+                      <MarkdownEditor
+                        value={editState.content}
+                        onChange={(val) =>
+                          setEditState(
+                            (prev) => prev && { ...prev, content: val }
+                          )
+                        }
+                      />
                     ) : (
                       <Textarea
                         value={editState.content}
@@ -526,6 +541,8 @@ export function ItemDrawer({ itemId, open, onClose }: ItemDrawerProps) {
                           value={item.content}
                           language={item.language ?? undefined}
                         />
+                      ) : isMarkdownType(item.itemType.name) ? (
+                        <MarkdownEditor value={item.content} />
                       ) : (
                         <ContentBlock content={item.content} />
                       )}

@@ -10,6 +10,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { CreateItemDialog } from "@/components/items/CreateItemDialog";
 
 interface DashboardShellProps extends SidebarData {
   children: React.ReactNode;
@@ -24,6 +25,7 @@ export function DashboardShell({
 }: DashboardShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [newItemOpen, setNewItemOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   const toggleSidebar = useCallback(() => {
@@ -62,9 +64,15 @@ export function DashboardShell({
 
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <TopBar onToggleSidebar={toggleSidebar} />
+        <TopBar onToggleSidebar={toggleSidebar} onNewItem={() => setNewItemOpen(true)} />
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
+
+      <CreateItemDialog
+        open={newItemOpen}
+        onOpenChange={setNewItemOpen}
+        itemTypes={sidebarItemTypes}
+      />
     </div>
   );
 }

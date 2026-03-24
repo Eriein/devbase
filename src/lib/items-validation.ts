@@ -1,5 +1,44 @@
 import { z } from "zod";
 
+// ─── Create schema ─────────────────────────────────────────────
+
+export const createItemSchema = z
+  .object({
+    title: z.string().trim().min(1, "Title is required"),
+    itemTypeId: z.string().min(1, "Type is required"),
+    typeName: z.string(), // used for conditional URL validation
+    description: z.string().nullable().optional(),
+    content: z.string().nullable().optional(),
+    url: z
+      .union([z.literal(""), z.url("Must be a valid URL")])
+      .nullable()
+      .optional()
+      .transform((v) => (v === "" ? null : v)),
+    language: z.string().nullable().optional(),
+    tags: z.array(z.string().trim().min(1)),
+  })
+  .superRefine((data, ctx) => {
+    if (data.typeName.toLowerCase() === "link" && !data.url) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["url"],
+        message: "URL is required for link items",
+      });
+    }
+  });
+
+export type CreateItemInput = z.infer<typeof createItemSchema>;
+
+export function validateCreateItem(
+  input: unknown
+): { ok: true; data: CreateItemInput } | { ok: false; error: string } {
+  const parsed = createItemSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0].message };
+  }
+  return { ok: true, data: parsed.data };
+}
+
 // ─── Schema ───────────────────────────────────────────────────
 
 export const updateItemSchema = z.object({

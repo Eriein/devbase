@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CodeEditor } from "@/components/items/CodeEditor";
+import { MarkdownEditor } from "@/components/items/MarkdownEditor";
 import {
   Code,
   Sparkles,
@@ -51,6 +52,10 @@ function showLanguage(typeName: string) {
 
 function isCodeType(typeName: string) {
   return ["snippet", "command"].includes(typeName.toLowerCase());
+}
+
+function isMarkdownType(typeName: string) {
+  return ["note", "prompt"].includes(typeName.toLowerCase());
 }
 
 function showUrl(typeName: string) {
@@ -251,6 +256,13 @@ export function CreateItemDialog({
                 <CodeEditor
                   value={form.content}
                   language={form.language || undefined}
+                  onChange={(val) =>
+                    setForm((prev) => ({ ...prev, content: val }))
+                  }
+                />
+              ) : isMarkdownType(selectedType.name) ? (
+                <MarkdownEditor
+                  value={form.content}
                   onChange={(val) =>
                     setForm((prev) => ({ ...prev, content: val }))
                   }

@@ -1,5 +1,127 @@
 import { describe, it, expect } from "vitest";
-import { validateUpdateItem } from "./items-validation";
+import { validateCreateItem, validateUpdateItem } from "./items-validation";
+
+// ─── validateCreateItem ───────────────────────────────────────
+
+const validSnippet = {
+  title: "My Snippet",
+  itemTypeId: "type-1",
+  typeName: "Snippet",
+  description: null,
+  content: null,
+  url: null,
+  language: null,
+  tags: [],
+};
+
+const validLink = {
+  title: "Cool Link",
+  itemTypeId: "type-5",
+  typeName: "Link",
+  description: null,
+  content: null,
+  url: "https://example.com",
+  language: null,
+  tags: [],
+};
+
+describe("validateCreateItem", () => {
+  it("accepts a minimal valid snippet", () => {
+    const result = validateCreateItem(validSnippet);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.title).toBe("My Snippet");
+      expect(result.data.itemTypeId).toBe("type-1");
+    }
+  });
+
+  it("accepts a valid link with URL", () => {
+    const result = validateCreateItem(validLink);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.url).toBe("https://example.com");
+    }
+  });
+
+  it("rejects link type when URL is missing", () => {
+    const result = validateCreateItem({ ...validLink, url: null });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toMatch(/url.*required/i);
+    }
+  });
+
+  it("rejects link type when URL is empty string", () => {
+    const result = validateCreateItem({ ...validLink, url: "" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toMatch(/url.*required/i);
+    }
+  });
+
+  it("accepts non-link type without URL", () => {
+    const result = validateCreateItem({ ...validSnippet, typeName: "Prompt", url: null });
+    expect(result.ok).toBe(true);
+  });
+
+  it("rejects an invalid URL", () => {
+    const result = validateCreateItem({ ...validLink, url: "not-a-url" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toMatch(/url/i);
+    }
+  });
+
+  it("transforms empty string URL to null for non-link types", () => {
+    const result = validateCreateItem({ ...validSnippet, url: "" });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.url).toBeNull();
+    }
+  });
+
+  it("rejects empty title", () => {
+    const result = validateCreateItem({ ...validSnippet, title: "" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toMatch(/title/i);
+    }
+  });
+
+  it("rejects whitespace-only title", () => {
+    const result = validateCreateItem({ ...validSnippet, title: "   " });
+    expect(result.ok).toBe(false);
+  });
+
+  it("trims title before validation", () => {
+    const result = validateCreateItem({ ...validSnippet, title: "  My Hook  " });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.title).toBe("My Hook");
+    }
+  });
+
+  it("rejects missing itemTypeId", () => {
+    const result = validateCreateItem({ ...validSnippet, itemTypeId: "" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toMatch(/type/i);
+    }
+  });
+
+  it("accepts tags array", () => {
+    const result = validateCreateItem({ ...validSnippet, tags: ["react", "hooks"] });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.tags).toEqual(["react", "hooks"]);
+    }
+  });
+
+  it("is case-insensitive for link typeName check", () => {
+    const result = validateCreateItem({ ...validLink, typeName: "LINK", url: null });
+    expect(result.ok).toBe(false);
+  });
+});
 
 // ─── Fixtures ─────────────────────────────────────────────────
 

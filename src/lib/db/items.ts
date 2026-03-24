@@ -196,6 +196,48 @@ export async function updateItem(
   return mapItemDetail(row);
 }
 
+// ─── Create item ─────────────────────────────────────────────
+
+export type CreateItemData = {
+  itemTypeId: string;
+  title: string;
+  description: string | null;
+  content: string | null;
+  url: string | null;
+  language: string | null;
+  tags: string[];
+};
+
+export async function createItem(
+  userId: string,
+  data: CreateItemData
+): Promise<ItemDetail> {
+  const row = await prisma.item.create({
+    data: {
+      userId,
+      itemTypeId: data.itemTypeId,
+      contentType: "text",
+      title: data.title,
+      description: data.description,
+      content: data.content,
+      url: data.url,
+      language: data.language,
+      tags: {
+        create: data.tags.map((name) => ({
+          tag: {
+            connectOrCreate: {
+              where: { name },
+              create: { name },
+            },
+          },
+        })),
+      },
+    },
+    select: itemDetailSelect,
+  });
+  return mapItemDetail(row);
+}
+
 // ─── Delete item ─────────────────────────────────────────────
 
 export async function deleteItem(

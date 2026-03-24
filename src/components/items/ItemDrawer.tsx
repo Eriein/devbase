@@ -132,7 +132,7 @@ function ContentBlock({ content }: { content: string }) {
           <tbody>
             {lines.map((line, i) => (
               <tr key={i}>
-                <td className="select-none pr-4 text-right align-top font-mono text-xs text-muted-foreground/50">
+                <td className="w-px select-none pr-4 text-right align-top font-mono text-xs text-muted-foreground/50">
                   {i + 1}
                 </td>
                 <td className="whitespace-pre-wrap break-words font-mono text-sm text-foreground">

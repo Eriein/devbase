@@ -33,7 +33,18 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { ItemDetail } from "@/lib/db/items";
-import { updateItem } from "@/lib/actions/items";
+import { updateItem, deleteItem } from "@/lib/actions/items";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // ─── Icon map ─────────────────────────────────────────────────
 
@@ -211,6 +222,20 @@ export function ItemDrawer({ itemId, open, onClose }: ItemDrawerProps) {
   const handleEditCancel = () => {
     setIsEditing(false);
     setEditState(null);
+  };
+
+  const handleDelete = () => {
+    if (!item) return;
+    startTransition(async () => {
+      const result = await deleteItem(item.id);
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Item deleted");
+      onClose();
+      router.refresh();
+    });
   };
 
   const handleSave = () => {
@@ -392,14 +417,38 @@ export function ItemDrawer({ itemId, open, onClose }: ItemDrawerProps) {
                     <span className="text-xs">Edit</span>
                   </Button>
                   <div className="flex-1" />
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    title="Delete"
-                    className="text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger
+                      render={
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          title="Delete"
+                          className="text-muted-foreground hover:text-destructive"
+                          disabled={isPending}
+                        />
+                      }
+                    >
+                      <Trash2 className="size-4" />
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete item?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          <strong className="text-foreground">{item.title}</strong> will be permanently deleted. This cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDelete}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               )}
 

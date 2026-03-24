@@ -196,6 +196,18 @@ export async function updateItem(
   return mapItemDetail(row);
 }
 
+// ─── Delete item ─────────────────────────────────────────────
+
+export async function deleteItem(
+  userId: string,
+  itemId: string
+): Promise<boolean> {
+  const deleted = await prisma.item.deleteMany({
+    where: { id: itemId, userId },
+  });
+  return deleted.count > 0;
+}
+
 // ─── Stats ───────────────────────────────────────────────────
 
 export async function getItemStats(userId: string) {

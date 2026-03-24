@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
-import { updateItem as dbUpdateItem } from "@/lib/db/items";
+import { updateItem as dbUpdateItem, deleteItem as dbDeleteItem } from "@/lib/db/items";
 import { validateUpdateItem } from "@/lib/items-validation";
 import type { UpdateItemInput } from "@/lib/items-validation";
 import type { ItemDetail } from "@/lib/db/items";
@@ -10,7 +10,24 @@ export type UpdateItemResult =
   | { success: true; data: ItemDetail }
   | { success: false; error: string };
 
-// ─── Server action ────────────────────────────────────────────
+export type DeleteItemResult =
+  | { success: true }
+  | { success: false; error: string };
+
+// ─── Server actions ───────────────────────────────────────────
+
+export async function deleteItem(itemId: string): Promise<DeleteItemResult> {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+
+  try {
+    const deleted = await dbDeleteItem(session.user.id, itemId);
+    if (!deleted) return { success: false, error: "Item not found" };
+    return { success: true };
+  } catch {
+    return { success: false, error: "Failed to delete item" };
+  }
+}
 
 export async function updateItem(
   itemId: string,

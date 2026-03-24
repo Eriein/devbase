@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, createContext, useContext } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Sidebar, type SidebarData } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
@@ -11,6 +11,23 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { CreateItemDialog } from "@/components/items/CreateItemDialog";
+
+// ─── Context ──────────────────────────────────────────────────
+
+interface CreateItemDialogContextValue {
+  openCreateDialog: (typeId?: string) => void;
+}
+
+export const CreateItemDialogContext =
+  createContext<CreateItemDialogContextValue>({
+    openCreateDialog: () => {},
+  });
+
+export function useCreateItemDialog() {
+  return useContext(CreateItemDialogContext);
+}
+
+// ─── Shell ────────────────────────────────────────────────────
 
 interface DashboardShellProps extends SidebarData {
   children: React.ReactNode;
@@ -26,6 +43,7 @@ export function DashboardShell({
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [newItemOpen, setNewItemOpen] = useState(false);
+  const [newItemTypeId, setNewItemTypeId] = useState<string | undefined>();
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   const toggleSidebar = useCallback(() => {
@@ -36,9 +54,15 @@ export function DashboardShell({
     }
   }, [isMobile]);
 
+  const openCreateDialog = useCallback((typeId?: string) => {
+    setNewItemTypeId(typeId);
+    setNewItemOpen(true);
+  }, []);
+
   const sidebarData: SidebarData = { sidebarItemTypes, sidebarCollections, userName, userImage };
 
   return (
+    <CreateItemDialogContext.Provider value={{ openCreateDialog }}>
     <div className="flex h-screen">
       {/* Desktop sidebar */}
       {!isMobile && (
@@ -64,7 +88,7 @@ export function DashboardShell({
 
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <TopBar onToggleSidebar={toggleSidebar} onNewItem={() => setNewItemOpen(true)} />
+        <TopBar onToggleSidebar={toggleSidebar} onNewItem={() => openCreateDialog()} />
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
 
@@ -72,7 +96,9 @@ export function DashboardShell({
         open={newItemOpen}
         onOpenChange={setNewItemOpen}
         itemTypes={sidebarItemTypes}
+        initialTypeId={newItemTypeId}
       />
     </div>
+    </CreateItemDialogContext.Provider>
   );
 }

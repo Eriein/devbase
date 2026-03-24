@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { CodeEditor } from "@/components/items/CodeEditor";
 import {
   Code,
   Sparkles,
@@ -48,6 +49,10 @@ function showLanguage(typeName: string) {
   return ["snippet", "command"].includes(typeName.toLowerCase());
 }
 
+function isCodeType(typeName: string) {
+  return ["snippet", "command"].includes(typeName.toLowerCase());
+}
+
 function showUrl(typeName: string) {
   return typeName.toLowerCase() === "link";
 }
@@ -80,12 +85,14 @@ interface CreateItemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   itemTypes: SidebarItemType[];
+  initialTypeId?: string;
 }
 
 export function CreateItemDialog({
   open,
   onOpenChange,
   itemTypes,
+  initialTypeId,
 }: CreateItemDialogProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -100,6 +107,15 @@ export function CreateItemDialog({
   const [form, setForm] = useState<FormState>(emptyForm);
 
   const selectedType = creatableTypes.find((t) => t.id === selectedTypeId);
+
+  // Reset form and apply preselected type each time the dialog opens
+  useEffect(() => {
+    if (open) {
+      setForm(emptyForm);
+      setSelectedTypeId(initialTypeId ?? creatableTypes[0]?.id ?? "");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   function handleOpenChange(next: boolean) {
     if (!next) {
@@ -157,7 +173,7 @@ export function CreateItemDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>New Item</DialogTitle>
         </DialogHeader>
@@ -231,13 +247,22 @@ export function CreateItemDialog({
               <label className="mb-1.5 block text-xs font-medium text-foreground">
                 Content
               </label>
-              <Textarea
-                value={form.content}
-                onChange={patch("content")}
-                placeholder="Content"
-                rows={5}
-                className="font-mono text-sm"
-              />
+              {isCodeType(selectedType.name) ? (
+                <CodeEditor
+                  value={form.content}
+                  language={form.language || undefined}
+                  onChange={(val) =>
+                    setForm((prev) => ({ ...prev, content: val }))
+                  }
+                />
+              ) : (
+                <Textarea
+                  value={form.content}
+                  onChange={patch("content")}
+                  placeholder="Content"
+                  rows={5}
+                />
+              )}
             </div>
           )}
 

@@ -11,6 +11,7 @@ import {
 import { auth } from "@/auth";
 import { getItemsByType, getItemTypeBySlug } from "@/lib/db/items";
 import { ItemCard } from "@/components/items/ItemCard";
+import { NewItemButton } from "@/components/items/NewItemButton";
 
 const iconMap: Record<
   string,
@@ -56,6 +57,12 @@ export default async function ItemsByTypePage({ params }: PageProps) {
         <span className="text-sm text-muted-foreground">
           {items.length} {items.length === 1 ? "item" : "items"}
         </span>
+        <div className="flex-1" />
+        <NewItemButton
+          typeId={itemType.id}
+          typeName={typeName}
+          color={itemType.color}
+        />
       </div>
 
       {items.length === 0 ? (

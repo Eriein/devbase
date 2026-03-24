@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { CodeEditor } from "@/components/items/CodeEditor";
 import {
   Star,
   Pin,
@@ -70,6 +71,11 @@ function showContent(typeName: string) {
 }
 
 function showLanguage(typeName: string) {
+  return ["snippet", "command"].includes(typeName.toLowerCase());
+}
+
+/** Types that get Monaco code editor instead of a plain textarea */
+function isCodeType(typeName: string) {
   return ["snippet", "command"].includes(typeName.toLowerCase());
 }
 
@@ -489,13 +495,24 @@ export function ItemDrawer({ itemId, open, onClose }: ItemDrawerProps) {
                     <label className="mb-2 block text-sm font-medium text-foreground">
                       Content
                     </label>
-                    <Textarea
-                      value={editState.content}
-                      onChange={patch("content")}
-                      placeholder="Content"
-                      rows={8}
-                      className="font-mono text-sm"
-                    />
+                    {isCodeType(item.itemType.name) ? (
+                      <CodeEditor
+                        value={editState.content}
+                        language={editState.language || undefined}
+                        onChange={(val) =>
+                          setEditState(
+                            (prev) => prev && { ...prev, content: val }
+                          )
+                        }
+                      />
+                    ) : (
+                      <Textarea
+                        value={editState.content}
+                        onChange={patch("content")}
+                        placeholder="Content"
+                        rows={8}
+                      />
+                    )}
                   </div>
                 ) : (
                   !isEditing &&
@@ -504,7 +521,14 @@ export function ItemDrawer({ itemId, open, onClose }: ItemDrawerProps) {
                       <h3 className="mb-2 text-sm font-medium text-foreground">
                         Content
                       </h3>
-                      <ContentBlock content={item.content} />
+                      {isCodeType(item.itemType.name) ? (
+                        <CodeEditor
+                          value={item.content}
+                          language={item.language ?? undefined}
+                        />
+                      ) : (
+                        <ContentBlock content={item.content} />
+                      )}
                     </div>
                   )
                 )}

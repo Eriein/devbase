@@ -40,7 +40,7 @@ export function ItemCard({ item }: { item: DashboardItem }) {
   const { openDrawer } = useItemDrawer();
   const { itemType } = item;
   const Icon = iconMap[itemType.icon];
-  const previewContent = item.content ?? item.url ?? item.fileUrl ?? "";
+  const previewContent = item.content ?? item.description ?? item.url ?? item.fileName ?? "";
 
   return (
     <div

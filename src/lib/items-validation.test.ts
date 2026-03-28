@@ -121,6 +121,57 @@ describe("validateCreateItem", () => {
     const result = validateCreateItem({ ...validLink, typeName: "LINK", url: null });
     expect(result.ok).toBe(false);
   });
+
+  it("rejects file type when fileUrl is missing", () => {
+    const result = validateCreateItem({
+      ...validSnippet,
+      typeName: "file",
+      fileUrl: null,
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toMatch(/file.*upload/i);
+  });
+
+  it("rejects image type when fileUrl is missing", () => {
+    const result = validateCreateItem({
+      ...validSnippet,
+      typeName: "image",
+      fileUrl: null,
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toMatch(/file.*upload/i);
+  });
+
+  it("accepts file type with a fileUrl", () => {
+    const result = validateCreateItem({
+      ...validSnippet,
+      typeName: "file",
+      fileUrl: "uploads/user-1/abc.pdf",
+      fileName: "report.pdf",
+      fileSize: 204800,
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("accepts image type with a fileUrl", () => {
+    const result = validateCreateItem({
+      ...validSnippet,
+      typeName: "image",
+      fileUrl: "uploads/user-1/abc.png",
+      fileName: "photo.png",
+      fileSize: 102400,
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("is case-insensitive for file/image typeName check", () => {
+    const result = validateCreateItem({
+      ...validSnippet,
+      typeName: "FILE",
+      fileUrl: null,
+    });
+    expect(result.ok).toBe(false);
+  });
 });
 
 // ─── Fixtures ─────────────────────────────────────────────────

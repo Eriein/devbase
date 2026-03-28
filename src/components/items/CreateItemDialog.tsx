@@ -20,14 +20,18 @@ import {
   Terminal,
   StickyNote,
   Link as LinkIcon,
+  File as FileIcon,
+  Image as ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createItem } from "@/lib/actions/items";
 import type { SidebarItemType } from "@/lib/db/item-types";
+import { FileUpload } from "@/components/items/FileUpload";
+import type { UploadedFile } from "@/components/items/FileUpload";
 
 // ─── Constants ────────────────────────────────────────────────
 
-const CREATABLE_TYPES = ["snippet", "prompt", "command", "note", "link"];
+const CREATABLE_TYPES = ["snippet", "prompt", "command", "note", "link", "file", "image"];
 
 const iconMap: Record<
   string,
@@ -38,6 +42,8 @@ const iconMap: Record<
   Terminal,
   StickyNote,
   Link: LinkIcon,
+  File: FileIcon,
+  Image: ImageIcon,
 };
 
 function showContent(typeName: string) {
@@ -60,6 +66,18 @@ function isMarkdownType(typeName: string) {
 
 function showUrl(typeName: string) {
   return typeName.toLowerCase() === "link";
+}
+
+function isFileType(typeName: string) {
+  return typeName.toLowerCase() === "file";
+}
+
+function isImageType(typeName: string) {
+  return typeName.toLowerCase() === "image";
+}
+
+function needsFileUpload(typeName: string) {
+  return isFileType(typeName) || isImageType(typeName);
 }
 
 // ─── Form state ───────────────────────────────────────────────
@@ -110,6 +128,7 @@ export function CreateItemDialog({
     creatableTypes[0]?.id ?? ""
   );
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null);
 
   const selectedType = creatableTypes.find((t) => t.id === selectedTypeId);
 
@@ -117,6 +136,7 @@ export function CreateItemDialog({
   useEffect(() => {
     if (open) {
       setForm(emptyForm);
+      setUploadedFile(null);
       setSelectedTypeId(initialTypeId ?? creatableTypes[0]?.id ?? "");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -125,6 +145,7 @@ export function CreateItemDialog({
   function handleOpenChange(next: boolean) {
     if (!next) {
       setForm(emptyForm);
+      setUploadedFile(null);
       setSelectedTypeId(creatableTypes[0]?.id ?? "");
     }
     onOpenChange(next);
@@ -154,6 +175,9 @@ export function CreateItemDialog({
         url: form.url || null,
         language: form.language || null,
         tags,
+        fileUrl: uploadedFile?.key ?? null,
+        fileName: uploadedFile?.fileName ?? null,
+        fileSize: uploadedFile?.fileSize ?? null,
       });
 
       if (!result.success) {
@@ -167,13 +191,13 @@ export function CreateItemDialog({
     });
   }
 
-  const isLinkType = selectedType
-    ? showUrl(selectedType.name)
-    : false;
+  const isLinkType = selectedType ? showUrl(selectedType.name) : false;
+  const isUploadType = selectedType ? needsFileUpload(selectedType.name) : false;
 
   const canSubmit =
     form.title.trim().length > 0 &&
     (!isLinkType || form.url.trim().length > 0) &&
+    (!isUploadType || uploadedFile !== null) &&
     !isPending;
 
   return (
@@ -197,7 +221,10 @@ export function CreateItemDialog({
                   <button
                     key={type.id}
                     type="button"
-                    onClick={() => setSelectedTypeId(type.id)}
+                    onClick={() => {
+                      setSelectedTypeId(type.id);
+                      setUploadedFile(null);
+                    }}
                     className="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors"
                     style={
                       isSelected
@@ -245,6 +272,23 @@ export function CreateItemDialog({
               rows={2}
             />
           </div>
+
+          {/* File upload — file, image types */}
+          {selectedType && needsFileUpload(selectedType.name) && (
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-foreground">
+                File <span className="text-destructive">*</span>
+              </label>
+              <FileUpload
+                itemTypeName={
+                  isImageType(selectedType.name) ? "image" : "file"
+                }
+                uploaded={uploadedFile}
+                onUpload={setUploadedFile}
+                onClear={() => setUploadedFile(null)}
+              />
+            </div>
+          )}
 
           {/* Content — snippet, prompt, command, note */}
           {selectedType && showContent(selectedType.name) && (

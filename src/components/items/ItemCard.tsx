@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Code,
   Sparkles,
@@ -10,6 +11,8 @@ import {
   Link as LinkIcon,
   Pin,
   Star,
+  Copy,
+  Check,
 } from "lucide-react";
 import type { DashboardItem } from "@/lib/db/items";
 import { useItemDrawer } from "./ItemDrawerProvider";
@@ -38,9 +41,19 @@ function timeAgo(date: Date | string): string {
 
 export function ItemCard({ item }: { item: DashboardItem }) {
   const { openDrawer } = useItemDrawer();
+  const [copied, setCopied] = useState(false);
   const { itemType } = item;
   const Icon = iconMap[itemType.icon];
   const previewContent = item.content ?? item.description ?? item.url ?? item.fileName ?? "";
+  const copyValue = item.content ?? item.url ?? item.description ?? "";
+
+  function handleCopy(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!copyValue) return;
+    navigator.clipboard.writeText(copyValue);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
 
   return (
     <div
@@ -60,6 +73,18 @@ export function ItemCard({ item }: { item: DashboardItem }) {
           {item.isPinned && <Pin className="size-3 shrink-0 text-muted-foreground" />}
           {item.isFavorite && (
             <Star className="size-3 shrink-0 fill-amber-400 text-amber-400" />
+          )}
+          {copyValue && (
+            <button
+              onClick={handleCopy}
+              className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label="Copy to clipboard"
+            >
+              {copied
+                ? <Check className="size-3 text-green-500" />
+                : <Copy className="size-3" />
+              }
+            </button>
           )}
         </div>
 

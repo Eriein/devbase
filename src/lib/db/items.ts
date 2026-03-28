@@ -8,6 +8,7 @@ export type DashboardItem = {
   description: string | null;
   fileUrl: string | null;
   fileName: string | null;
+  fileSize: number | null;
   url: string | null;
   isFavorite: boolean;
   isPinned: boolean;
@@ -29,6 +30,7 @@ const itemSelect = {
   description: true,
   fileUrl: true,
   fileName: true,
+  fileSize: true,
   url: true,
   isFavorite: true,
   isPinned: true,
@@ -49,6 +51,7 @@ export function mapItem(raw: {
   description: string | null;
   fileUrl: string | null;
   fileName: string | null;
+  fileSize: number | null;
   url: string | null;
   isFavorite: boolean;
   isPinned: boolean;

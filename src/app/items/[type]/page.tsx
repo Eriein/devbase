@@ -12,6 +12,7 @@ import { auth } from "@/auth";
 import { getItemsByType, getItemTypeBySlug } from "@/lib/db/items";
 import { ItemCard } from "@/components/items/ItemCard";
 import { ImageThumbnailCard } from "@/components/items/ImageThumbnailCard";
+import { FileListRow } from "@/components/items/FileListRow";
 import { NewItemButton } from "@/components/items/NewItemButton";
 
 const iconMap: Record<
@@ -76,6 +77,12 @@ export default async function ItemsByTypePage({ params }: PageProps) {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
             <ImageThumbnailCard key={item.id} item={item} />
+          ))}
+        </div>
+      ) : itemType.name === "file" ? (
+        <div className="flex flex-col gap-2">
+          {items.map((item) => (
+            <FileListRow key={item.id} item={item} />
           ))}
         </div>
       ) : (

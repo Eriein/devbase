@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { CreateCollectionInput } from "@/lib/collections-validation";
 
 export type CollectionWithTypes = {
   id: string;
@@ -79,6 +80,24 @@ export async function getRecentCollections(
       typeIcons,
       dominantColor,
     };
+  });
+}
+
+export async function createCollection(
+  userId: string,
+  input: CreateCollectionInput
+) {
+  return prisma.collection.create({
+    data: {
+      userId,
+      name: input.name,
+      description: input.description ?? null,
+    },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+    },
   });
 }
 

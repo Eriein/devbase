@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { CreateItemDialog } from "@/components/items/CreateItemDialog";
+import { CreateCollectionDialog } from "@/components/collections/CreateCollectionDialog";
 
 // ─── Context ──────────────────────────────────────────────────
 
@@ -44,6 +45,7 @@ export function DashboardShell({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [newItemOpen, setNewItemOpen] = useState(false);
   const [newItemTypeId, setNewItemTypeId] = useState<string | undefined>();
+  const [newCollectionOpen, setNewCollectionOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   const toggleSidebar = useCallback(() => {
@@ -88,7 +90,11 @@ export function DashboardShell({
 
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <TopBar onToggleSidebar={toggleSidebar} onNewItem={() => openCreateDialog()} />
+        <TopBar
+          onToggleSidebar={toggleSidebar}
+          onNewItem={() => openCreateDialog()}
+          onNewCollection={() => setNewCollectionOpen(true)}
+        />
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
 
@@ -97,6 +103,10 @@ export function DashboardShell({
         onOpenChange={setNewItemOpen}
         itemTypes={sidebarItemTypes}
         initialTypeId={newItemTypeId}
+      />
+      <CreateCollectionDialog
+        open={newCollectionOpen}
+        onOpenChange={setNewCollectionOpen}
       />
     </div>
     </CreateItemDialogContext.Provider>

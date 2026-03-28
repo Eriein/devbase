@@ -11,6 +11,7 @@ import {
 import { auth } from "@/auth";
 import { getItemsByType, getItemTypeBySlug } from "@/lib/db/items";
 import { ItemCard } from "@/components/items/ItemCard";
+import { ImageThumbnailCard } from "@/components/items/ImageThumbnailCard";
 import { NewItemButton } from "@/components/items/NewItemButton";
 
 const iconMap: Record<
@@ -70,6 +71,12 @@ export default async function ItemsByTypePage({ params }: PageProps) {
           <p className="text-sm text-muted-foreground">
             No {type} yet. Create your first one!
           </p>
+        </div>
+      ) : itemType.name === "image" ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map((item) => (
+            <ImageThumbnailCard key={item.id} item={item} />
+          ))}
         </div>
       ) : (
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">

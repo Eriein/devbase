@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { Upload, X, File, Image as ImageIcon, CheckCircle2 } from "lucide-react";
 import { IMAGE_CONSTRAINTS, FILE_CONSTRAINTS, validateUploadByItemType } from "@/lib/upload-validation";
-import { cn } from "@/lib/utils";
+import { cn, formatFileSize } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -19,14 +19,6 @@ interface FileUploadProps {
   onUpload: (uploaded: UploadedFile) => void;
   onClear: () => void;
   uploaded: UploadedFile | null;
-}
-
-// ─── Helpers ──────────────────────────────────────────────────
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 // ─── Component ────────────────────────────────────────────────

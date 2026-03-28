@@ -2,13 +2,6 @@
 
 import { useState } from "react";
 import {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  File,
-  Image,
-  Link as LinkIcon,
   Pin,
   Star,
   Copy,
@@ -16,19 +9,7 @@ import {
 } from "lucide-react";
 import type { DashboardItem } from "@/lib/db/items";
 import { useItemDrawer } from "./ItemDrawerProvider";
-
-const iconMap: Record<
-  string,
-  React.ComponentType<{ className?: string; style?: React.CSSProperties }>
-> = {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  File,
-  Image,
-  Link: LinkIcon,
-};
+import { iconMap } from "@/lib/item-type-helpers";
 
 function timeAgo(date: Date | string): string {
   const diff = Date.now() - new Date(date).getTime();

@@ -15,6 +15,7 @@ export function ImageThumbnailCard({ item }: { item: DashboardItem }) {
       {/* Thumbnail */}
       <div className="aspect-video overflow-hidden bg-muted">
         {item.fileUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={`/api/download/${item.fileUrl}?inline=1`}
             alt={item.title}

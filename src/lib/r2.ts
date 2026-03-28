@@ -6,16 +6,14 @@ import {
 } from "@aws-sdk/client-s3";
 import type { GetObjectCommandOutput } from "@aws-sdk/client-s3";
 
-function getR2Client() {
-  return new S3Client({
-    region: "auto",
-    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-    },
-  });
-}
+const r2 = new S3Client({
+  region: "auto",
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+  },
+});
 
 export const R2_BUCKET = process.env.R2_BUCKET_NAME!;
 
@@ -24,7 +22,6 @@ export async function uploadToR2(
   body: Buffer,
   contentType: string
 ): Promise<void> {
-  const r2 = getR2Client();
   await r2.send(
     new PutObjectCommand({
       Bucket: R2_BUCKET,
@@ -36,7 +33,6 @@ export async function uploadToR2(
 }
 
 export async function deleteFromR2(key: string): Promise<void> {
-  const r2 = getR2Client();
   await r2.send(
     new DeleteObjectCommand({
       Bucket: R2_BUCKET,
@@ -46,7 +42,6 @@ export async function deleteFromR2(key: string): Promise<void> {
 }
 
 export async function getFromR2(key: string): Promise<GetObjectCommandOutput> {
-  const r2 = getR2Client();
   return r2.send(
     new GetObjectCommand({
       Bucket: R2_BUCKET,

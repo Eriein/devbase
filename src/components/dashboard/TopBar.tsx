@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 interface TopBarProps {
   onToggleSidebar: () => void;
   onNewItem?: () => void;
+  onNewCollection?: () => void;
 }
 
-export function TopBar({ onToggleSidebar, onNewItem }: TopBarProps) {
+export function TopBar({ onToggleSidebar, onNewItem, onNewCollection }: TopBarProps) {
   return (
     <header className="grid h-14 grid-cols-3 items-center border-b border-border px-6">
       <div className="flex items-center gap-3">
@@ -34,7 +35,7 @@ export function TopBar({ onToggleSidebar, onNewItem }: TopBarProps) {
           <Plus className="size-3.5" />
           <span>New Item</span>
         </Button>
-        <Button variant="ghost" size="sm" className="gap-1.5">
+        <Button variant="ghost" size="sm" className="gap-1.5" onClick={onNewCollection}>
           <FolderPlus className="size-3.5" />
           <span>New Collection</span>
         </Button>

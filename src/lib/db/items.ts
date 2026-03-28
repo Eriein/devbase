@@ -5,7 +5,9 @@ export type DashboardItem = {
   title: string;
   contentType: string;
   content: string | null;
+  description: string | null;
   fileUrl: string | null;
+  fileName: string | null;
   url: string | null;
   isFavorite: boolean;
   isPinned: boolean;
@@ -24,7 +26,9 @@ const itemSelect = {
   title: true,
   contentType: true,
   content: true,
+  description: true,
   fileUrl: true,
+  fileName: true,
   url: true,
   isFavorite: true,
   isPinned: true,
@@ -42,7 +46,9 @@ export function mapItem(raw: {
   title: string;
   contentType: string;
   content: string | null;
+  description: string | null;
   fileUrl: string | null;
+  fileName: string | null;
   url: string | null;
   isFavorite: boolean;
   isPinned: boolean;
@@ -206,6 +212,10 @@ export type CreateItemData = {
   url: string | null;
   language: string | null;
   tags: string[];
+  fileUrl?: string | null;
+  fileName?: string | null;
+  fileSize?: number | null;
+  contentType?: string;
 };
 
 export async function createItem(
@@ -216,12 +226,15 @@ export async function createItem(
     data: {
       userId,
       itemTypeId: data.itemTypeId,
-      contentType: "text",
+      contentType: data.contentType ?? "text",
       title: data.title,
       description: data.description,
       content: data.content,
       url: data.url,
       language: data.language,
+      fileUrl: data.fileUrl ?? null,
+      fileName: data.fileName ?? null,
+      fileSize: data.fileSize ?? null,
       tags: {
         create: data.tags.map((name) => ({
           tag: {
@@ -239,6 +252,17 @@ export async function createItem(
 }
 
 // ─── Delete item ─────────────────────────────────────────────
+
+export async function getItemFileKey(
+  userId: string,
+  itemId: string
+): Promise<string | null> {
+  const item = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    select: { fileUrl: true },
+  });
+  return item?.fileUrl ?? null;
+}
 
 export async function deleteItem(
   userId: string,

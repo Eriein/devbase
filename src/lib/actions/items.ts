@@ -5,6 +5,7 @@ import {
   createItem as dbCreateItem,
   updateItem as dbUpdateItem,
   deleteItem as dbDeleteItem,
+  getItemFileKey,
 } from "@/lib/db/items";
 import {
   validateCreateItem,
@@ -12,6 +13,7 @@ import {
 } from "@/lib/items-validation";
 import type { CreateItemInput, UpdateItemInput } from "@/lib/items-validation";
 import type { ItemDetail } from "@/lib/db/items";
+import { deleteFromR2 } from "@/lib/r2";
 
 export type CreateItemResult =
   | { success: true; data: ItemDetail }
@@ -47,6 +49,10 @@ export async function createItem(
       url: data.url ?? null,
       language: data.language ?? null,
       tags: data.tags,
+      fileUrl: data.fileUrl ?? null,
+      fileName: data.fileName ?? null,
+      fileSize: data.fileSize ?? null,
+      contentType: data.fileUrl ? "file" : "text",
     });
     return { success: true, data: created };
   } catch {
@@ -59,8 +65,16 @@ export async function deleteItem(itemId: string): Promise<DeleteItemResult> {
   if (!session?.user?.id) return { success: false, error: "Not authenticated" };
 
   try {
+    const fileKey = await getItemFileKey(session.user.id, itemId);
     const deleted = await dbDeleteItem(session.user.id, itemId);
     if (!deleted) return { success: false, error: "Item not found" };
+
+    if (fileKey) {
+      await deleteFromR2(fileKey).catch((err) =>
+        console.error("R2 delete error (non-fatal):", err)
+      );
+    }
+
     return { success: true };
   } catch {
     return { success: false, error: "Failed to delete item" };

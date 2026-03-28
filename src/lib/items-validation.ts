@@ -16,6 +16,9 @@ export const createItemSchema = z
       .transform((v) => (v === "" ? null : v)),
     language: z.string().nullable().optional(),
     tags: z.array(z.string().trim().min(1)),
+    fileUrl: z.string().nullable().optional(),
+    fileName: z.string().nullable().optional(),
+    fileSize: z.number().nullable().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.typeName.toLowerCase() === "link" && !data.url) {
@@ -23,6 +26,14 @@ export const createItemSchema = z
         code: "custom",
         path: ["url"],
         message: "URL is required for link items",
+      });
+    }
+    const isFileType = ["file", "image"].includes(data.typeName.toLowerCase());
+    if (isFileType && !data.fileUrl) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["fileUrl"],
+        message: "A file must be uploaded for this item type",
       });
     }
   });

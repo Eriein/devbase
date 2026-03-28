@@ -109,3 +109,23 @@ export function buildRateLimitError(
     minutesUntilReset: Math.ceil(minutesUntilReset / 60),
   };
 }
+
+// ─── withRateLimit ───────────────────────────────────────────
+
+/**
+ * Checks the rate limit for the given identifier and calls fn if allowed.
+ * Returns a rate-limit error object if the limit is exceeded.
+ * Fails open if Redis is unavailable (handled by disabledRatelimit).
+ */
+export async function withRateLimit<T>(
+  limiter: Ratelimit,
+  identifier: string,
+  fn: () => Promise<T>
+): Promise<T | ReturnType<typeof buildRateLimitError>> {
+  const { success, reset } = await limiter.limit(identifier);
+  if (!success) {
+    const secondsUntilReset = Math.ceil((reset - Date.now()) / 60000) * 60;
+    return buildRateLimitError(identifier, secondsUntilReset);
+  }
+  return fn();
+}

@@ -7,7 +7,7 @@ import { signIn, signOut } from "@/auth";
 import { AuthError } from "next-auth";
 import { generateVerificationToken, generatePasswordResetToken, validatePasswordResetToken } from "@/lib/tokens";
 import { sendVerificationEmail, sendPasswordResetEmail } from "@/lib/email";
-import { ratelimit, extractIPFromHeaders, buildRateLimitError } from "@/lib/rate-limit";
+import { ratelimit, extractIPFromHeaders, withRateLimit } from "@/lib/rate-limit";
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -21,10 +21,6 @@ function validatePassword(password: string, confirmPassword: string): string | n
   if (password !== confirmPassword) return "Passwords do not match";
   if (password.length < 8) return "Password must be at least 8 characters";
   return null;
-}
-
-function calculateRateLimitResetSeconds(resetTimestamp: number): number {
-  return Math.ceil((resetTimestamp - Date.now()) / 60000) * 60;
 }
 
 function shouldSendPasswordReset(user: { password: string | null } | null): boolean {
@@ -84,30 +80,22 @@ export async function forgotPassword(
   formData: FormData
 ): Promise<AuthState & { success?: boolean }> {
   const ip = await extractIPFromHeaders();
+  return withRateLimit(ratelimit.forgotPassword, ip, async () => {
+    const email = formData.get("email") as string;
 
-  const { success, reset } = await ratelimit.forgotPassword.limit(ip);
+    if (!email) {
+      return { error: "Email is required" };
+    }
 
-  if (!success) {
-    const secondsUntilReset = calculateRateLimitResetSeconds(reset);
-    return buildRateLimitError(ip, secondsUntilReset) as AuthState & { success?: boolean };
-  }
+    const user = await prisma.user.findUnique({ where: { email } });
 
-  const email = formData.get("email") as string;
+    if (shouldSendPasswordReset(user)) {
+      const token = await generatePasswordResetToken(email);
+      await sendPasswordResetEmail(email, token);
+    }
 
-  if (!email) {
-    return { error: "Email is required" };
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { email },
-  });
-
-  if (shouldSendPasswordReset(user)) {
-    const token = await generatePasswordResetToken(email);
-    await sendPasswordResetEmail(email, token);
-  }
-
-  return { success: true };
+    return { success: true };
+  }) as Promise<AuthState & { success?: boolean }>;
 }
 
 // ─── Reset Password ──────────────────────────────────────────
@@ -117,50 +105,42 @@ export async function resetPassword(
   formData: FormData
 ): Promise<AuthState & { success?: boolean }> {
   const ip = await extractIPFromHeaders();
+  return withRateLimit(ratelimit.resetPassword, ip, async () => {
+    const token = formData.get("token") as string;
+    const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
 
-  const { success, reset } = await ratelimit.resetPassword.limit(ip);
+    if (!token || !password || !confirmPassword) {
+      return { error: "All fields are required" };
+    }
 
-  if (!success) {
-    const secondsUntilReset = calculateRateLimitResetSeconds(reset);
-    return buildRateLimitError(ip, secondsUntilReset) as AuthState & { success?: boolean };
-  }
+    const passwordError = validatePassword(password, confirmPassword);
+    if (passwordError) return { error: passwordError };
 
-  const token = formData.get("token") as string;
-  const password = formData.get("password") as string;
-  const confirmPassword = formData.get("confirmPassword") as string;
+    const result = await validatePasswordResetToken(token);
 
-  if (!token || !password || !confirmPassword) {
-    return { error: "All fields are required" };
-  }
+    if ("error" in result) {
+      return { error: result.error };
+    }
 
-  const passwordError = validatePassword(password, confirmPassword);
-  if (passwordError) return { error: passwordError };
+    const hashedPassword = await bcrypt.hash(password, 12);
 
-  const result = await validatePasswordResetToken(token);
-
-  if ("error" in result) {
-    return { error: result.error };
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 12);
-
-  const user = await prisma.user.findUnique({
-    where: { email: result.email },
-    select: { id: true },
-  });
-
-  if (user) {
-    await prisma.session.deleteMany({
-      where: { userId: user.id },
+    const user = await prisma.user.findUnique({
+      where: { email: result.email },
+      select: { id: true },
     });
-  }
 
-  await prisma.user.update({
-    where: { email: result.email },
-    data: { password: hashedPassword },
-  });
+    if (user) {
+      await prisma.session.deleteMany({ where: { userId: user.id } });
+    }
 
-  redirect("/sign-in?reset=true");
+    await prisma.user.update({
+      where: { email: result.email },
+      data: { password: hashedPassword },
+    });
+
+    redirect("/sign-in?reset=true");
+  }) as Promise<AuthState & { success?: boolean }>;
 }
 
 // ─── Register ─────────────────────────────────────────────────
@@ -223,30 +203,22 @@ export async function resendVerification(
   formData: FormData
 ): Promise<AuthState & { success?: boolean }> {
   const ip = await extractIPFromHeaders();
+  return withRateLimit(ratelimit.resendVerification, ip, async () => {
+    const email = formData.get("email") as string;
 
-  const { success, reset } = await ratelimit.resendVerification.limit(ip);
+    if (!email) {
+      return { error: "Email is required" };
+    }
 
-  if (!success) {
-    const secondsUntilReset = calculateRateLimitResetSeconds(reset);
-    return buildRateLimitError(ip, secondsUntilReset) as AuthState & { success?: boolean };
-  }
+    const user = await prisma.user.findUnique({ where: { email } });
 
-  const email = formData.get("email") as string;
+    if (!shouldResendVerification(user)) {
+      return { success: true };
+    }
 
-  if (!email) {
-    return { error: "Email is required" };
-  }
+    const token = await generateVerificationToken(email);
+    await sendVerificationEmail(email, token);
 
-  const user = await prisma.user.findUnique({
-    where: { email },
-  });
-
-  if (!shouldResendVerification(user)) {
     return { success: true };
-  }
-
-  const token = await generateVerificationToken(email);
-  await sendVerificationEmail(email, token);
-
-  return { success: true };
+  }) as Promise<AuthState & { success?: boolean }>;
 }

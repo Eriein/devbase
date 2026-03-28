@@ -47,6 +47,7 @@ CLAUDE.md
 AGENTS.md
 .mcp.json
 .opencode
+.playwright-mcp
 
 # Docs
 docs/

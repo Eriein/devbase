@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { formatFileSize } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -12,9 +10,6 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { CodeEditor } from "@/components/items/CodeEditor";
-import { MarkdownEditor } from "@/components/items/MarkdownEditor";
 import {
   Star,
   Pin,
@@ -22,17 +17,11 @@ import {
   Pencil,
   Trash2,
   Check,
-  File,
-  FolderOpen,
-  Clock,
   Save,
   X,
-  Download,
 } from "lucide-react";
-import { iconMap, showContent, showLanguage, isCodeType, isMarkdownType, showUrl } from "@/lib/item-type-helpers";
-import { toast } from "sonner";
+import { iconMap } from "@/lib/item-type-helpers";
 import type { ItemDetail } from "@/lib/db/items";
-import { updateItem, deleteItem } from "@/lib/actions/items";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,16 +33,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-
-// ─── Helpers ──────────────────────────────────────────────────
-
-function formatDate(date: string | Date): string {
-  return new Date(date).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
+import { useItemDrawerActions } from "./drawer/useItemDrawerActions";
+import { ItemContentSection } from "./drawer/ItemContentSection";
+import { ItemFileSection } from "./drawer/ItemFileSection";
+import { ItemTagsSection } from "./drawer/ItemTagsSection";
+import { ItemMetadataSection } from "./drawer/ItemMetadataSection";
+import { ItemDrawerEditForm } from "./drawer/ItemDrawerEditForm";
 
 // ─── Skeleton ─────────────────────────────────────────────────
 
@@ -83,54 +68,6 @@ function DrawerSkeleton() {
   );
 }
 
-// ─── Content with line numbers ────────────────────────────────
-
-function ContentBlock({ content }: { content: string }) {
-  const lines = content.split("\n");
-  return (
-    <div className="overflow-hidden rounded-lg border border-border bg-muted/30">
-      <div className="overflow-x-auto p-4">
-        <table className="w-full border-collapse">
-          <tbody>
-            {lines.map((line, i) => (
-              <tr key={i}>
-                <td className="w-px select-none pr-4 text-right align-top font-mono text-xs text-muted-foreground/50">
-                  {i + 1}
-                </td>
-                <td className="whitespace-pre-wrap break-words font-mono text-sm text-foreground">
-                  {line || "\u00A0"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-// ─── Edit form state ──────────────────────────────────────────
-
-type EditState = {
-  title: string;
-  description: string;
-  content: string;
-  url: string;
-  language: string;
-  tagsRaw: string;
-};
-
-function itemToEditState(item: ItemDetail): EditState {
-  return {
-    title: item.title,
-    description: item.description ?? "",
-    content: item.content ?? "",
-    url: item.url ?? "",
-    language: item.language ?? "",
-    tagsRaw: item.tags.map((t) => t.name).join(", "),
-  };
-}
-
 // ─── Drawer ───────────────────────────────────────────────────
 
 interface ItemDrawerProps {
@@ -140,23 +77,33 @@ interface ItemDrawerProps {
 }
 
 export function ItemDrawer({ itemId, open, onClose }: ItemDrawerProps) {
-  const router = useRouter();
   const [item, setItem] = useState<ItemDetail | null>(null);
   const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editState, setEditState] = useState<EditState | null>(null);
-  const [isPending, startTransition] = useTransition();
+
+  const {
+    copied,
+    isEditing,
+    editState,
+    isPending,
+    setEditState,
+    handleCopy,
+    handleEditStart,
+    handleEditCancel,
+    handleDelete,
+    handleSave,
+    patch,
+    resetEditState,
+  } = useItemDrawerActions(item, setItem, onClose);
 
   useEffect(() => {
     if (!itemId) {
       setItem(null);
-      setIsEditing(false);
+      resetEditState();
       return;
     }
 
     setLoading(true);
-    setIsEditing(false);
+    resetEditState();
     fetch(`/api/items/${itemId}`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch");
@@ -165,75 +112,8 @@ export function ItemDrawer({ itemId, open, onClose }: ItemDrawerProps) {
       .then((data) => setItem(data))
       .catch(() => setItem(null))
       .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemId]);
-
-  const handleCopy = () => {
-    const text = item?.content ?? item?.url ?? "";
-    if (!text) return;
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleEditStart = () => {
-    if (!item) return;
-    setEditState(itemToEditState(item));
-    setIsEditing(true);
-  };
-
-  const handleEditCancel = () => {
-    setIsEditing(false);
-    setEditState(null);
-  };
-
-  const handleDelete = () => {
-    if (!item) return;
-    startTransition(async () => {
-      const result = await deleteItem(item.id);
-      if (!result.success) {
-        toast.error(result.error);
-        return;
-      }
-      toast.success("Item deleted");
-      onClose();
-      router.refresh();
-    });
-  };
-
-  const handleSave = () => {
-    if (!item || !editState) return;
-
-    const tags = editState.tagsRaw
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-
-    startTransition(async () => {
-      const result = await updateItem(item.id, {
-        title: editState.title,
-        description: editState.description || null,
-        content: editState.content || null,
-        url: editState.url || null,
-        language: editState.language || null,
-        tags,
-      });
-
-      if (!result.success) {
-        toast.error(result.error);
-        return;
-      }
-
-      setItem(result.data);
-      setIsEditing(false);
-      setEditState(null);
-      toast.success("Item updated");
-      router.refresh();
-    });
-  };
-
-  const patch = (field: keyof EditState) => (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => setEditState((prev) => prev && { ...prev, [field]: e.target.value });
 
   const TypeIcon = item ? iconMap[item.itemType.icon] : null;
   const accentColor = item?.itemType.color ?? undefined;
@@ -267,10 +147,7 @@ export function ItemDrawer({ itemId, open, onClose }: ItemDrawerProps) {
                     className="flex size-10 shrink-0 items-center justify-center rounded-full"
                     style={{ backgroundColor: accentColor + "20" }}
                   >
-                    <TypeIcon
-                      className="size-5"
-                      style={{ color: accentColor }}
-                    />
+                    <TypeIcon className="size-5" style={{ color: accentColor }} />
                   </div>
                 )}
                 <div className="min-w-0 flex-1 pr-6">
@@ -364,9 +241,7 @@ export function ItemDrawer({ itemId, open, onClose }: ItemDrawerProps) {
                     ) : (
                       <Copy className="size-4" />
                     )}
-                    <span className="text-xs">
-                      {copied ? "Copied!" : "Copy"}
-                    </span>
+                    <span className="text-xs">{copied ? "Copied!" : "Copy"}</span>
                   </Button>
                   <Button
                     variant="ghost"
@@ -397,7 +272,8 @@ export function ItemDrawer({ itemId, open, onClose }: ItemDrawerProps) {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete item?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          <strong className="text-foreground">{item.title}</strong> will be permanently deleted. This cannot be undone.
+                          <strong className="text-foreground">{item.title}</strong>{" "}
+                          will be permanently deleted. This cannot be undone.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -419,278 +295,75 @@ export function ItemDrawer({ itemId, open, onClose }: ItemDrawerProps) {
 
               {/* ── Body sections ── */}
               <div className="flex-1 space-y-6 px-6 pt-6 pb-6">
-                {/* Description */}
                 {isEditing && editState ? (
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-foreground">
-                      Description
-                    </label>
-                    <Textarea
-                      value={editState.description}
-                      onChange={patch("description")}
-                      placeholder="Optional description"
-                      rows={3}
-                    />
-                  </div>
+                  <ItemDrawerEditForm
+                    item={item}
+                    editState={editState}
+                    patch={patch}
+                    onContentChange={(val) =>
+                      setEditState((prev) => prev && { ...prev, content: val })
+                    }
+                  />
                 ) : (
-                  item.description && (
-                    <div>
-                      <h3 className="mb-2 text-sm font-medium text-foreground">
-                        Description
-                      </h3>
-                      <p className="text-sm leading-relaxed text-muted-foreground">
-                        {item.description}
-                      </p>
-                    </div>
-                  )
-                )}
-
-                {/* Content */}
-                {isEditing && editState && showContent(item.itemType.name) ? (
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-foreground">
-                      Content
-                    </label>
-                    {isCodeType(item.itemType.name) ? (
-                      <CodeEditor
-                        value={editState.content}
-                        language={editState.language || undefined}
-                        onChange={(val) =>
-                          setEditState(
-                            (prev) => prev && { ...prev, content: val }
-                          )
-                        }
-                      />
-                    ) : isMarkdownType(item.itemType.name) ? (
-                      <MarkdownEditor
-                        value={editState.content}
-                        onChange={(val) =>
-                          setEditState(
-                            (prev) => prev && { ...prev, content: val }
-                          )
-                        }
-                      />
-                    ) : (
-                      <Textarea
-                        value={editState.content}
-                        onChange={patch("content")}
-                        placeholder="Content"
-                        rows={8}
-                      />
-                    )}
-                  </div>
-                ) : (
-                  !isEditing &&
-                  item.content && (
-                    <div>
-                      <h3 className="mb-2 text-sm font-medium text-foreground">
-                        Content
-                      </h3>
-                      {isCodeType(item.itemType.name) ? (
-                        <CodeEditor
-                          value={item.content}
-                          language={item.language ?? undefined}
-                        />
-                      ) : isMarkdownType(item.itemType.name) ? (
-                        <MarkdownEditor value={item.content} />
-                      ) : (
-                        <ContentBlock content={item.content} />
-                      )}
-                    </div>
-                  )
-                )}
-
-                {/* URL */}
-                {isEditing && editState && showUrl(item.itemType.name) ? (
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-foreground">
-                      URL
-                    </label>
-                    <Input
-                      value={editState.url}
-                      onChange={patch("url")}
-                      placeholder="https://..."
-                      type="url"
-                    />
-                  </div>
-                ) : (
-                  !isEditing &&
-                  item.url && (
-                    <div>
-                      <h3 className="mb-2 text-sm font-medium text-foreground">
-                        Link
-                      </h3>
-                      <div className="rounded-lg border border-border bg-muted/30 p-4">
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="break-all text-sm text-blue-400 underline underline-offset-2 hover:text-blue-300"
-                        >
-                          {item.url}
-                        </a>
+                  <>
+                    {/* Description — view mode */}
+                    {item.description && (
+                      <div>
+                        <h3 className="mb-2 text-sm font-medium text-foreground">
+                          Description
+                        </h3>
+                        <p className="text-sm leading-relaxed text-muted-foreground">
+                          {item.description}
+                        </p>
                       </div>
-                    </div>
-                  )
-                )}
+                    )}
 
-                {/* Language */}
-                {isEditing && editState && showLanguage(item.itemType.name) && (
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-foreground">
-                      Language
-                    </label>
-                    <Input
-                      value={editState.language}
-                      onChange={patch("language")}
-                      placeholder="e.g. typescript"
+                    {/* Content — view mode */}
+                    <ItemContentSection
+                      item={item}
+                      isEditing={false}
+                      editState={null}
+                      onContentChange={() => {}}
                     />
-                  </div>
-                )}
 
-                {/* Image preview — view only */}
-                {!isEditing &&
-                  item.fileUrl &&
-                  item.itemType.name.toLowerCase() === "image" && (
-                    <div>
-                      <h3 className="mb-2 text-sm font-medium text-foreground">
-                        Image
-                      </h3>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={`/api/download/${item.fileUrl}?inline=1`}
-                        alt={item.fileName ?? item.title}
-                        className="max-h-72 w-full rounded-lg border border-border object-contain"
-                      />
-                      {item.fileName && (
-                        <div className="mt-2 flex items-center justify-between">
-                          <span className="truncate text-xs text-muted-foreground">
-                            {item.fileName}
-                            {item.fileSize && ` · ${formatFileSize(item.fileSize)}`}
-                          </span>
+                    {/* URL — view mode */}
+                    {item.url && (
+                      <div>
+                        <h3 className="mb-2 text-sm font-medium text-foreground">
+                          Link
+                        </h3>
+                        <div className="rounded-lg border border-border bg-muted/30 p-4">
                           <a
-                            href={`/api/download/${item.fileUrl}`}
-                            download={item.fileName}
-                            className="ml-2 flex shrink-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="break-all text-sm text-blue-400 underline underline-offset-2 hover:text-blue-300"
                           >
-                            <Download className="size-3" />
-                            Download
+                            {item.url}
                           </a>
                         </div>
-                      )}
-                    </div>
-                  )}
-
-                {/* File info + download — view only */}
-                {!isEditing &&
-                  item.fileUrl &&
-                  item.itemType.name.toLowerCase() === "file" && (
-                    <div>
-                      <h3 className="mb-2 text-sm font-medium text-foreground">
-                        File
-                      </h3>
-                      <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 p-4">
-                        <File className="size-4 shrink-0 text-muted-foreground" />
-                        <span className="min-w-0 flex-1 truncate text-sm text-foreground">
-                          {item.fileName ?? "file"}
-                        </span>
-                        {item.fileSize && (
-                          <span className="shrink-0 text-xs text-muted-foreground">
-                            {formatFileSize(item.fileSize)}
-                          </span>
-                        )}
-                        <a
-                          href={`/api/download/${item.fileUrl}`}
-                          download={item.fileName ?? "download"}
-                          className="flex shrink-0 items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
-                        >
-                          <Download className="size-3" />
-                          Download
-                        </a>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                {/* Tags */}
-                {isEditing && editState ? (
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-foreground">
-                      Tags
-                    </label>
-                    <Input
-                      value={editState.tagsRaw}
-                      onChange={patch("tagsRaw")}
-                      placeholder="react, hooks, typescript"
-                    />
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Comma-separated
-                    </p>
-                  </div>
-                ) : (
-                  item.tags.length > 0 && (
-                    <div>
-                      <h3 className="mb-2 text-sm font-medium text-foreground">
-                        Tags
-                      </h3>
-                      <div className="flex flex-wrap gap-1.5">
-                        {item.tags.map((tag) => (
-                          <span
-                            key={tag.id}
-                            className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground"
-                          >
-                            {tag.name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )
+                    {/* Image / File — view mode */}
+                    <ItemFileSection item={item} />
+                  </>
                 )}
 
-                {/* Collections — view only */}
-                {item.collections.length > 0 && (
-                  <div>
-                    <div className="mb-2 flex items-center gap-1.5">
-                      <FolderOpen className="size-3.5 text-muted-foreground" />
-                      <h3 className="text-sm font-medium text-foreground">
-                        Collections
-                      </h3>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {item.collections.map((col) => (
-                        <span
-                          key={col.id}
-                          className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground"
-                        >
-                          {col.name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* Tags — both modes */}
+                <ItemTagsSection
+                  item={item}
+                  isEditing={isEditing}
+                  editState={editState}
+                  onPatch={
+                    patch("tagsRaw") as (
+                      e: React.ChangeEvent<HTMLInputElement>
+                    ) => void
+                  }
+                />
 
-                {/* Details */}
-                <div>
-                  <div className="mb-3 flex items-center gap-1.5">
-                    <Clock className="size-3.5 text-muted-foreground" />
-                    <h3 className="text-sm font-medium text-foreground">
-                      Details
-                    </h3>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Created</span>
-                      <span className="text-foreground">
-                        {formatDate(item.createdAt)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Updated</span>
-                      <span className="text-foreground">
-                        {formatDate(item.updatedAt)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                {/* Collections + Details — view mode only */}
+                {!isEditing && <ItemMetadataSection item={item} />}
               </div>
             </div>
           </>

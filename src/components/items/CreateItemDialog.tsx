@@ -12,9 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CodeEditor } from "@/components/items/CodeEditor";
-import { MarkdownEditor } from "@/components/items/MarkdownEditor";
-import { iconMap, showContent, showLanguage, isCodeType, isMarkdownType, showUrl } from "@/lib/item-type-helpers";
+import { ContentFieldRenderer } from "@/components/items/ContentFieldRenderer";
+import { iconMap, showContent, showLanguage, showUrl, isImageType, needsFileUpload } from "@/lib/item-type-helpers";
 import { toast } from "sonner";
 import { createItem } from "@/lib/actions/items";
 import type { SidebarItemType } from "@/lib/db/item-types";
@@ -24,18 +23,6 @@ import type { UploadedFile } from "@/components/items/FileUpload";
 // ─── Constants ────────────────────────────────────────────────
 
 const CREATABLE_TYPES = ["snippet", "prompt", "command", "note", "link", "file", "image"];
-
-function isFileType(typeName: string) {
-  return typeName.toLowerCase() === "file";
-}
-
-function isImageType(typeName: string) {
-  return typeName.toLowerCase() === "image";
-}
-
-function needsFileUpload(typeName: string) {
-  return isFileType(typeName) || isImageType(typeName);
-}
 
 // ─── Form state ───────────────────────────────────────────────
 
@@ -253,29 +240,13 @@ export function CreateItemDialog({
               <label className="mb-1.5 block text-xs font-medium text-foreground">
                 Content
               </label>
-              {isCodeType(selectedType.name) ? (
-                <CodeEditor
-                  value={form.content}
-                  language={form.language || undefined}
-                  onChange={(val) =>
-                    setForm((prev) => ({ ...prev, content: val }))
-                  }
-                />
-              ) : isMarkdownType(selectedType.name) ? (
-                <MarkdownEditor
-                  value={form.content}
-                  onChange={(val) =>
-                    setForm((prev) => ({ ...prev, content: val }))
-                  }
-                />
-              ) : (
-                <Textarea
-                  value={form.content}
-                  onChange={patch("content")}
-                  placeholder="Content"
-                  rows={5}
-                />
-              )}
+              <ContentFieldRenderer
+                typeName={selectedType.name}
+                value={form.content}
+                language={form.language || undefined}
+                onChange={(val) => setForm((prev) => ({ ...prev, content: val }))}
+                rows={5}
+              />
             </div>
           )}
 

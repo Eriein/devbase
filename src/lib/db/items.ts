@@ -65,35 +65,39 @@ export function mapItem(raw: {
   };
 }
 
-export async function getPinnedItems(userId: string): Promise<DashboardItem[]> {
+// ─── Shared query helper ──────────────────────────────────────
+
+type FindManyArgs = NonNullable<Parameters<typeof prisma.item.findMany>[0]>;
+
+async function queryItems(
+  where: FindManyArgs["where"],
+  options: {
+    orderBy?: FindManyArgs["orderBy"];
+    take?: number;
+  } = {}
+): Promise<DashboardItem[]> {
   const rows = await prisma.item.findMany({
-    where: { userId, isPinned: true },
-    orderBy: { updatedAt: "desc" },
+    where,
+    orderBy: options.orderBy ?? { updatedAt: "desc" },
+    take: options.take,
     select: itemSelect,
   });
   return rows.map(mapItem);
 }
 
+export async function getPinnedItems(userId: string): Promise<DashboardItem[]> {
+  return queryItems({ userId, isPinned: true }, { orderBy: { updatedAt: "desc" } });
+}
+
 export async function getRecentItems(userId: string, limit = 10): Promise<DashboardItem[]> {
-  const rows = await prisma.item.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-    take: limit,
-    select: itemSelect,
-  });
-  return rows.map(mapItem);
+  return queryItems({ userId }, { orderBy: { createdAt: "desc" }, take: limit });
 }
 
 export async function getItemsByType(
   userId: string,
   typeId: string
 ): Promise<DashboardItem[]> {
-  const rows = await prisma.item.findMany({
-    where: { userId, itemTypeId: typeId },
-    orderBy: { createdAt: "desc" },
-    select: itemSelect,
-  });
-  return rows.map(mapItem);
+  return queryItems({ userId, itemTypeId: typeId }, { orderBy: { createdAt: "desc" } });
 }
 
 export async function getItemTypeBySlug(slug: string) {

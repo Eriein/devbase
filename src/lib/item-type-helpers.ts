@@ -41,3 +41,15 @@ export function isMarkdownType(typeName: string): boolean {
 export function showUrl(typeName: string): boolean {
   return typeName.toLowerCase() === "link";
 }
+
+export function isFileType(typeName: string): boolean {
+  return typeName.toLowerCase() === "file";
+}
+
+export function isImageType(typeName: string): boolean {
+  return typeName.toLowerCase() === "image";
+}
+
+export function needsFileUpload(typeName: string): boolean {
+  return isFileType(typeName) || isImageType(typeName);
+}

@@ -1,42 +1,23 @@
 import {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  File,
-  Image,
-  Link as LinkIcon,
   FolderOpen,
   Pin,
   Star,
   Clock,
   Package,
 } from "lucide-react";
+import { iconMap } from "@/lib/item-type-helpers";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getRecentCollections, getCollectionStats } from "@/lib/db/collections";
 import { getPinnedItems, getRecentItems, getItemStats } from "@/lib/db/items";
 import { ItemCard } from "@/components/items/ItemCard";
 
-// ─── Icon map ─────────────────────────────────────────────────
-
-const iconMap: Record<
-  string,
-  React.ComponentType<{ className?: string; style?: React.CSSProperties }>
-> = {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  File,
-  Image,
-  Link: LinkIcon,
-};
-
 // ─── Page ─────────────────────────────────────────────────────
 
 export default async function DashboardPage() {
   const session = await auth();
-  const userId = session!.user!.id!;
+  if (!session?.user?.id) redirect("/sign-in");
+  const userId = session.user.id;
 
   const [recentCollections, collectionStats, pinnedItems, recentItems, itemStats] =
     await Promise.all([

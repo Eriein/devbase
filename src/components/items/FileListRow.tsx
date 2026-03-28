@@ -3,6 +3,7 @@
 import { Download, File, FileText, FileImage, FileCode, FileArchive } from "lucide-react";
 import type { DashboardItem } from "@/lib/db/items";
 import { useItemDrawer } from "./ItemDrawerProvider";
+import { formatFileSize } from "@/lib/utils";
 
 function fileIcon(fileName: string | null) {
   const ext = fileName?.split(".").pop()?.toLowerCase() ?? "";
@@ -13,12 +14,6 @@ function fileIcon(fileName: string | null) {
   return File;
 }
 
-function formatSize(bytes: number | null): string {
-  if (bytes == null) return "—";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 function formatDate(date: Date | string): string {
   return new Date(date).toLocaleDateString(undefined, {
@@ -59,7 +54,7 @@ export function FileListRow({ item }: { item: DashboardItem }) {
 
       {/* Size + date — hidden on mobile, stacked on sm */}
       <div className="hidden shrink-0 text-right sm:block">
-        <p className="text-xs text-muted-foreground">{formatSize(item.fileSize)}</p>
+        <p className="text-xs text-muted-foreground">{formatFileSize(item.fileSize)}</p>
         <p className="text-xs text-muted-foreground">{formatDate(item.updatedAt)}</p>
       </div>
 

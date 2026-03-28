@@ -1,32 +1,11 @@
 import { notFound } from "next/navigation";
-import {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  File,
-  Image,
-  Link as LinkIcon,
-} from "lucide-react";
 import { auth } from "@/auth";
+import { iconMap } from "@/lib/item-type-helpers";
 import { getItemsByType, getItemTypeBySlug } from "@/lib/db/items";
 import { ItemCard } from "@/components/items/ItemCard";
 import { ImageThumbnailCard } from "@/components/items/ImageThumbnailCard";
 import { FileListRow } from "@/components/items/FileListRow";
 import { NewItemButton } from "@/components/items/NewItemButton";
-
-const iconMap: Record<
-  string,
-  React.ComponentType<{ className?: string; style?: React.CSSProperties }>
-> = {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  File,
-  Image,
-  Link: LinkIcon,
-};
 
 interface PageProps {
   params: Promise<{ type: string }>;

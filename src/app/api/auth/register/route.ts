@@ -6,7 +6,7 @@ import { sendVerificationEmail } from "@/lib/email";
 import { ratelimit, extractIP, createRateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
-  const ip = extractIP(request as never);
+  const ip = extractIP(request);
 
   const { success, reset } = await ratelimit.register.limit(ip);
 

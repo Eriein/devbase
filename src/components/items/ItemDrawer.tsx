@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { formatFileSize } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import {
   Sheet,
@@ -21,19 +22,14 @@ import {
   Pencil,
   Trash2,
   Check,
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
   File,
-  Image,
-  Link as LinkIcon,
   FolderOpen,
   Clock,
   Save,
   X,
   Download,
 } from "lucide-react";
+import { iconMap, showContent, showLanguage, isCodeType, isMarkdownType, showUrl } from "@/lib/item-type-helpers";
 import { toast } from "sonner";
 import type { ItemDetail } from "@/lib/db/items";
 import { updateItem, deleteItem } from "@/lib/actions/items";
@@ -49,47 +45,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-// ─── Icon map ─────────────────────────────────────────────────
-
-const iconMap: Record<
-  string,
-  React.ComponentType<{ className?: string; style?: React.CSSProperties }>
-> = {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  File,
-  Image,
-  Link: LinkIcon,
-};
-
-// ─── Type-specific field visibility ───────────────────────────
-
-function showContent(typeName: string) {
-  return ["snippet", "prompt", "command", "note"].includes(
-    typeName.toLowerCase()
-  );
-}
-
-function showLanguage(typeName: string) {
-  return ["snippet", "command"].includes(typeName.toLowerCase());
-}
-
-/** Types that get Monaco code editor instead of a plain textarea */
-function isCodeType(typeName: string) {
-  return ["snippet", "command"].includes(typeName.toLowerCase());
-}
-
-/** Types that get the markdown editor instead of a plain textarea */
-function isMarkdownType(typeName: string) {
-  return ["note", "prompt"].includes(typeName.toLowerCase());
-}
-
-function showUrl(typeName: string) {
-  return typeName.toLowerCase() === "link";
-}
-
 // ─── Helpers ──────────────────────────────────────────────────
 
 function formatDate(date: string | Date): string {
@@ -98,12 +53,6 @@ function formatDate(date: string | Date): string {
     month: "long",
     day: "numeric",
   });
-}
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 // ─── Skeleton ─────────────────────────────────────────────────

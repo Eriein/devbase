@@ -4,13 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   Code2,
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  File,
-  Image,
-  Link as LinkIcon,
   Star,
   Clock,
   ChevronDown,
@@ -18,6 +11,7 @@ import {
   LogOut,
   User,
 } from "lucide-react";
+import { iconMap } from "@/lib/item-type-helpers";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -45,21 +39,6 @@ export interface SidebarData {
 interface SidebarProps extends SidebarData {
   collapsed: boolean;
 }
-
-// ─── Icon map ─────────────────────────────────────────────────
-
-const iconMap: Record<
-  string,
-  React.ComponentType<{ className?: string; style?: React.CSSProperties }>
-> = {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  File,
-  Image,
-  Link: LinkIcon,
-};
 
 // ─── Helpers ──────────────────────────────────────────────────
 

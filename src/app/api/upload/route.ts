@@ -3,11 +3,21 @@ import { randomUUID } from "crypto";
 import { auth } from "@/auth";
 import { uploadToR2 } from "@/lib/r2";
 import { validateUploadByItemType } from "@/lib/upload-validation";
+import { ratelimit, createRateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { success, reset } = await ratelimit.upload.limit(session.user.id);
+  if (!success) {
+    const secondsUntilReset = Math.ceil((reset - Date.now()) / 1000);
+    return createRateLimitResponse(
+      "Too many uploads. Please try again later.",
+      secondsUntilReset
+    );
   }
 
   let formData: FormData;

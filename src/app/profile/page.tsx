@@ -1,16 +1,11 @@
 import {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  File,
-  Image,
-  Link as LinkIcon,
   Package,
   FolderOpen,
   Mail,
   Calendar,
 } from "lucide-react";
+import { iconMap } from "@/lib/item-type-helpers";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { UserAvatar } from "@/components/UserAvatar";
 import { getProfileUser, getItemTypeBreakdown } from "@/lib/db/profile";
@@ -19,26 +14,12 @@ import { getCollectionStats } from "@/lib/db/collections";
 import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
 
-// ─── Icon map ─────────────────────────────────────────────────
-
-const iconMap: Record<
-  string,
-  React.ComponentType<{ className?: string; style?: React.CSSProperties }>
-> = {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  File,
-  Image,
-  Link: LinkIcon,
-};
-
 // ─── Page ─────────────────────────────────────────────────────
 
 export default async function ProfilePage() {
   const session = await auth();
-  const userId = session!.user!.id!;
+  if (!session?.user?.id) redirect("/sign-in");
+  const userId = session.user.id;
 
   const [user, itemTypeBreakdown, itemStats, collectionStats] =
     await Promise.all([

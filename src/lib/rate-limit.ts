@@ -1,6 +1,6 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 
 const redis = new Redis({
@@ -57,9 +57,17 @@ export const ratelimit = {
         prefix: "ratelimit:resend-verification",
       })
     : disabledRatelimit,
+  upload: isRedisConfigured()
+    ? new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(20, "1 h"),
+        analytics: true,
+        prefix: "ratelimit:upload",
+      })
+    : disabledRatelimit,
 };
 
-export function extractIP(request: NextRequest): string {
+export function extractIP(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) {
     return forwarded.split(",")[0]!.trim();

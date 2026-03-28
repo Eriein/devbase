@@ -14,15 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CodeEditor } from "@/components/items/CodeEditor";
 import { MarkdownEditor } from "@/components/items/MarkdownEditor";
-import {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  Link as LinkIcon,
-  File as FileIcon,
-  Image as ImageIcon,
-} from "lucide-react";
+import { iconMap, showContent, showLanguage, isCodeType, isMarkdownType, showUrl } from "@/lib/item-type-helpers";
 import { toast } from "sonner";
 import { createItem } from "@/lib/actions/items";
 import type { SidebarItemType } from "@/lib/db/item-types";
@@ -32,41 +24,6 @@ import type { UploadedFile } from "@/components/items/FileUpload";
 // ─── Constants ────────────────────────────────────────────────
 
 const CREATABLE_TYPES = ["snippet", "prompt", "command", "note", "link", "file", "image"];
-
-const iconMap: Record<
-  string,
-  React.ComponentType<{ className?: string; style?: React.CSSProperties }>
-> = {
-  Code,
-  Sparkles,
-  Terminal,
-  StickyNote,
-  Link: LinkIcon,
-  File: FileIcon,
-  Image: ImageIcon,
-};
-
-function showContent(typeName: string) {
-  return ["snippet", "prompt", "command", "note"].includes(
-    typeName.toLowerCase()
-  );
-}
-
-function showLanguage(typeName: string) {
-  return ["snippet", "command"].includes(typeName.toLowerCase());
-}
-
-function isCodeType(typeName: string) {
-  return ["snippet", "command"].includes(typeName.toLowerCase());
-}
-
-function isMarkdownType(typeName: string) {
-  return ["note", "prompt"].includes(typeName.toLowerCase());
-}
-
-function showUrl(typeName: string) {
-  return typeName.toLowerCase() === "link";
-}
 
 function isFileType(typeName: string) {
   return typeName.toLowerCase() === "file";

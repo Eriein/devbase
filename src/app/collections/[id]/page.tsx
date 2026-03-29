@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
-import { Star } from "lucide-react";
+import { Star, ImageIcon, Paperclip } from "lucide-react";
 import { auth } from "@/auth";
 import { getCollectionById } from "@/lib/db/collections";
-import { iconMap } from "@/lib/item-type-helpers";
+import { iconMap, isImageType, isFileType } from "@/lib/item-type-helpers";
 import { ItemCard } from "@/components/items/ItemCard";
+import { ImageThumbnailCard } from "@/components/items/ImageThumbnailCard";
+import { FileListRow } from "@/components/items/FileListRow";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -18,28 +20,32 @@ export default async function CollectionDetailPage({ params }: PageProps) {
   const collection = await getCollectionById(id, session.user.id);
   if (!collection) notFound();
 
+  const images = collection.items.filter((i) => isImageType(i.itemType.name));
+  const files  = collection.items.filter((i) => isFileType(i.itemType.name));
+  const rest   = collection.items.filter(
+    (i) => !isImageType(i.itemType.name) && !isFileType(i.itemType.name)
+  );
+
+  const hasMediaSections = images.length > 0 || files.length > 0;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-start gap-3">
         <div
           className="mt-0.5 rounded-md p-2"
           style={{ backgroundColor: collection.dominantColor + "20" }}
         >
-          <div className="flex items-center gap-1">
-            {collection.typeIcons.length > 0
-              ? collection.typeIcons.slice(0, 1).map((type) => {
-                  const Icon = iconMap[type.icon];
-                  return Icon ? (
-                    <Icon
-                      key={type.id}
-                      className="size-5"
-                      style={{ color: collection.dominantColor }}
-                    />
-                  ) : null;
-                })
-              : null}
-          </div>
+          {collection.typeIcons.slice(0, 1).map((type) => {
+            const Icon = iconMap[type.icon];
+            return Icon ? (
+              <Icon
+                key={type.id}
+                className="size-5"
+                style={{ color: collection.dominantColor }}
+              />
+            ) : null;
+          })}
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2">
@@ -62,19 +68,65 @@ export default async function CollectionDetailPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* Items */}
-      {collection.items.length === 0 ? (
+      {/* Empty state */}
+      {collection.items.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16">
           <p className="text-sm text-muted-foreground">
             No items in this collection yet.
           </p>
         </div>
-      ) : (
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {collection.items.map((item) => (
-            <ItemCard key={item.id} item={item} />
-          ))}
-        </div>
+      )}
+
+      {/* Images */}
+      {images.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <ImageIcon className="size-4 text-muted-foreground" />
+            <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Images
+            </h2>
+            <span className="text-xs text-muted-foreground">{images.length}</span>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {images.map((item) => (
+              <ImageThumbnailCard key={item.id} item={item} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Files */}
+      {files.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Paperclip className="size-4 text-muted-foreground" />
+            <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Files
+            </h2>
+            <span className="text-xs text-muted-foreground">{files.length}</span>
+          </div>
+          <div className="flex flex-col gap-2">
+            {files.map((item) => (
+              <FileListRow key={item.id} item={item} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Everything else */}
+      {rest.length > 0 && (
+        <section className="space-y-3">
+          {hasMediaSections && (
+            <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Items
+            </h2>
+          )}
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {rest.map((item) => (
+              <ItemCard key={item.id} item={item} />
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );

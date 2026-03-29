@@ -53,6 +53,7 @@ export async function createItem(
       fileName: data.fileName ?? null,
       fileSize: data.fileSize ?? null,
       contentType: data.fileUrl ? "file" : "text",
+      collectionIds: data.collectionIds,
     });
     return { success: true, data: created };
   } catch {
@@ -101,6 +102,7 @@ export async function updateItem(
       url: data.url ?? null,
       language: data.language ?? null,
       tags: data.tags,
+      collectionIds: data.collectionIds,
     });
 
     if (!updated) return { success: false, error: "Item not found" };

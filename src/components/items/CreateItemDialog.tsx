@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ContentFieldRenderer } from "@/components/items/ContentFieldRenderer";
+import { CollectionMultiSelect } from "@/components/items/CollectionMultiSelect";
 import { iconMap, showContent, showLanguage, showUrl, isImageType, needsFileUpload } from "@/lib/item-type-helpers";
 import { toast } from "sonner";
 import { createItem } from "@/lib/actions/items";
@@ -73,6 +74,7 @@ export function CreateItemDialog({
   );
   const [form, setForm] = useState<FormState>(emptyForm);
   const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null);
+  const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>([]);
 
   const selectedType = creatableTypes.find((t) => t.id === selectedTypeId);
 
@@ -81,6 +83,7 @@ export function CreateItemDialog({
     if (open) {
       setForm(emptyForm);
       setUploadedFile(null);
+      setSelectedCollectionIds([]);
       setSelectedTypeId(initialTypeId ?? creatableTypes[0]?.id ?? "");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -90,6 +93,7 @@ export function CreateItemDialog({
     if (!next) {
       setForm(emptyForm);
       setUploadedFile(null);
+      setSelectedCollectionIds([]);
       setSelectedTypeId(creatableTypes[0]?.id ?? "");
     }
     onOpenChange(next);
@@ -122,6 +126,7 @@ export function CreateItemDialog({
         fileUrl: uploadedFile?.key ?? null,
         fileName: uploadedFile?.fileName ?? null,
         fileSize: uploadedFile?.fileSize ?? null,
+        collectionIds: selectedCollectionIds,
       });
 
       if (!result.success) {
@@ -292,6 +297,17 @@ export function CreateItemDialog({
             <p className="mt-1 text-xs text-muted-foreground">
               Comma-separated
             </p>
+          </div>
+
+          {/* Collections */}
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-foreground">
+              Collections
+            </label>
+            <CollectionMultiSelect
+              value={selectedCollectionIds}
+              onChange={setSelectedCollectionIds}
+            />
           </div>
         </div>
 

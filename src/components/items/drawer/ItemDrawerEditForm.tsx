@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { showLanguage, showUrl } from "@/lib/item-type-helpers";
 import { ItemContentSection } from "./ItemContentSection";
+import { CollectionMultiSelect } from "@/components/items/CollectionMultiSelect";
 import type { EditState } from "./useItemDrawerActions";
 import type { ItemDetail } from "@/lib/db/items";
 
@@ -14,6 +15,7 @@ interface ItemDrawerEditFormProps {
     field: keyof EditState
   ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onContentChange: (val: string) => void;
+  onCollectionIdsChange: (ids: string[]) => void;
 }
 
 export function ItemDrawerEditForm({
@@ -21,6 +23,7 @@ export function ItemDrawerEditForm({
   editState,
   patch,
   onContentChange,
+  onCollectionIdsChange,
 }: ItemDrawerEditFormProps) {
   const typeName = item.itemType.name;
 
@@ -75,6 +78,17 @@ export function ItemDrawerEditForm({
           />
         </div>
       )}
+
+      {/* Collections */}
+      <div>
+        <label className="mb-2 block text-sm font-medium text-foreground">
+          Collections
+        </label>
+        <CollectionMultiSelect
+          value={editState.collectionIds}
+          onChange={onCollectionIdsChange}
+        />
+      </div>
     </>
   );
 }

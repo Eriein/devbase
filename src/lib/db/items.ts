@@ -177,6 +177,7 @@ export type UpdateItemData = {
   url: string | null;
   language: string | null;
   tags: string[];
+  collectionIds?: string[];
 };
 
 export async function updateItem(
@@ -203,6 +204,12 @@ export async function updateItem(
           },
         })),
       },
+      collections: {
+        deleteMany: {},
+        create: (data.collectionIds ?? []).map((collectionId) => ({
+          collectionId,
+        })),
+      },
     },
     select: itemDetailSelect,
   });
@@ -223,6 +230,7 @@ export type CreateItemData = {
   fileName?: string | null;
   fileSize?: number | null;
   contentType?: string;
+  collectionIds?: string[];
 };
 
 export async function createItem(
@@ -250,6 +258,11 @@ export async function createItem(
               create: { name },
             },
           },
+        })),
+      },
+      collections: {
+        create: (data.collectionIds ?? []).map((collectionId) => ({
+          collectionId,
         })),
       },
     },

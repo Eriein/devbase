@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { validateCreateCollection } from "./collections-validation";
+import { validateCreateCollection, normalizeDescription } from "./collections-validation";
 
 // ─── validateCreateCollection ─────────────────────────────────
 
@@ -81,5 +81,25 @@ describe("validateCreateCollection", () => {
   it("rejects non-string name", () => {
     const result = validateCreateCollection({ name: 42 });
     expect(result.ok).toBe(false);
+  });
+});
+
+// ─── normalizeDescription ──────────────────────────────────────
+
+describe("normalizeDescription", () => {
+  it("returns null for empty string", () => {
+    expect(normalizeDescription("")).toBeNull();
+  });
+
+  it("returns null for whitespace-only string", () => {
+    expect(normalizeDescription("   ")).toBeNull();
+  });
+
+  it("trims and returns non-empty string", () => {
+    expect(normalizeDescription("  hello  ")).toBe("hello");
+  });
+
+  it("returns non-empty string unchanged (already trimmed)", () => {
+    expect(normalizeDescription("my description")).toBe("my description");
   });
 });

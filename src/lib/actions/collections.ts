@@ -1,7 +1,11 @@
 "use server";
 
 import { auth } from "@/auth";
-import { createCollection as dbCreateCollection } from "@/lib/db/collections";
+import {
+  createCollection as dbCreateCollection,
+  updateCollection as dbUpdateCollection,
+  deleteCollection as dbDeleteCollection,
+} from "@/lib/db/collections";
 import { validateCreateCollection } from "@/lib/collections-validation";
 import type { CreateCollectionInput } from "@/lib/collections-validation";
 
@@ -11,7 +15,41 @@ export type CreateCollectionResult =
   | { success: true; data: { id: string; name: string; description: string | null } }
   | { success: false; error: string };
 
+export type ActionResult =
+  | { success: true }
+  | { success: false; error: string };
+
 // ─── Server actions ───────────────────────────────────────────
+
+export async function updateCollection(
+  id: string,
+  input: CreateCollectionInput
+): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+
+  const validation = validateCreateCollection(input);
+  if (!validation.ok) return { success: false, error: validation.error };
+
+  try {
+    await dbUpdateCollection(id, session.user.id, validation.data);
+    return { success: true };
+  } catch {
+    return { success: false, error: "Failed to update collection" };
+  }
+}
+
+export async function deleteCollection(id: string): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+
+  try {
+    await dbDeleteCollection(id, session.user.id);
+    return { success: true };
+  } catch {
+    return { success: false, error: "Failed to delete collection" };
+  }
+}
 
 export async function createCollection(
   input: CreateCollectionInput

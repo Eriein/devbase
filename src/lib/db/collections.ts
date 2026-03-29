@@ -156,6 +156,25 @@ export async function createCollection(
   });
 }
 
+export async function updateCollection(
+  id: string,
+  userId: string,
+  input: CreateCollectionInput
+) {
+  return prisma.collection.updateMany({
+    where: { id, userId },
+    data: {
+      name: input.name,
+      description: input.description ?? null,
+    },
+  });
+}
+
+export async function deleteCollection(id: string, userId: string) {
+  // ItemCollection rows cascade-delete automatically via DB constraint
+  return prisma.collection.deleteMany({ where: { id, userId } });
+}
+
 export async function getUserCollections(
   userId: string
 ): Promise<{ id: string; name: string }[]> {

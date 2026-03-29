@@ -6,6 +6,7 @@ import { iconMap, isImageType, isFileType } from "@/lib/item-type-helpers";
 import { ItemCard } from "@/components/items/ItemCard";
 import { ImageThumbnailCard } from "@/components/items/ImageThumbnailCard";
 import { FileListRow } from "@/components/items/FileListRow";
+import { CollectionActions } from "@/components/collections/CollectionActions";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -48,13 +49,20 @@ export default async function CollectionDetailPage({ params }: PageProps) {
           })}
         </div>
         <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold text-foreground">
-              {collection.name}
-            </h1>
-            {collection.isFavorite && (
-              <Star className="size-4 fill-amber-400 text-amber-400" />
-            )}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-semibold text-foreground">
+                {collection.name}
+              </h1>
+              {collection.isFavorite && (
+                <Star className="size-4 fill-amber-400 text-amber-400" />
+              )}
+            </div>
+            <CollectionActions
+              id={collection.id}
+              name={collection.name}
+              description={collection.description}
+            />
           </div>
           {collection.description && (
             <p className="mt-1 text-sm text-muted-foreground">

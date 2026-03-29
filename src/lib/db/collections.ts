@@ -101,6 +101,16 @@ export async function createCollection(
   });
 }
 
+export async function getUserCollections(
+  userId: string
+): Promise<{ id: string; name: string }[]> {
+  return prisma.collection.findMany({
+    where: { userId },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
+}
+
 export async function getCollectionStats(userId: string) {
   const [totalCollections, favoriteCollections] = await Promise.all([
     prisma.collection.count({ where: { userId } }),

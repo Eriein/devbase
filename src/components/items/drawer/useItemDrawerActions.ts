@@ -15,6 +15,7 @@ export type EditState = {
   url: string;
   language: string;
   tagsRaw: string;
+  collectionIds: string[];
 };
 
 export function itemToEditState(item: ItemDetail): EditState {
@@ -25,6 +26,7 @@ export function itemToEditState(item: ItemDetail): EditState {
     url: item.url ?? "",
     language: item.language ?? "",
     tagsRaw: item.tags.map((t) => t.name).join(", "),
+    collectionIds: item.collections.map((c) => c.id),
   };
 }
 
@@ -90,6 +92,7 @@ export function useItemDrawerActions(
         url: editState.url || null,
         language: editState.language || null,
         tags,
+        collectionIds: editState.collectionIds,
       });
 
       if (!result.success) {

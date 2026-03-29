@@ -5,6 +5,7 @@ import {
   Clock,
   Package,
 } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getRecentCollections, getCollectionStats } from "@/lib/db/collections";
@@ -22,7 +23,7 @@ export default async function DashboardPage() {
 
   const [recentCollections, collectionStats, pinnedItems, recentItems, itemStats] =
     await Promise.all([
-      getRecentCollections(userId),
+      getRecentCollections(userId, 6),
       getCollectionStats(userId),
       getPinnedItems(userId),
       getRecentItems(userId),
@@ -45,13 +46,18 @@ export default async function DashboardPage() {
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-base font-semibold text-foreground">Collections</h2>
-          <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <Link
+            href="/collections"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
             View all
-          </button>
+          </Link>
         </div>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {recentCollections.map((collection) => (
-            <CollectionCard key={collection.id} collection={collection} />
+            <Link key={collection.id} href={`/collections/${collection.id}`}>
+              <CollectionCard collection={collection} />
+            </Link>
           ))}
         </div>
       </section>

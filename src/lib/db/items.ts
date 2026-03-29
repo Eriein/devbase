@@ -22,7 +22,7 @@ export type DashboardItem = {
   tags: { id: string; name: string }[];
 };
 
-const itemSelect = {
+export const itemSelect = {
   id: true,
   title: true,
   contentType: true,

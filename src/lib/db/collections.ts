@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { CreateCollectionInput } from "@/lib/collections-validation";
+import type { DashboardItem } from "@/lib/db/items";
+import { mapItem, itemSelect } from "@/lib/db/items";
 
 export type CollectionWithTypes = {
   id: string;
@@ -19,14 +21,44 @@ export type CollectionWithTypes = {
   dominantColor: string;
 };
 
+export type CollectionDetail = CollectionWithTypes & {
+  items: DashboardItem[];
+};
+
+// ─── Pure helpers ─────────────────────────────────────────────
+
+type ItemTypeEntry = { id: string; icon: string; color: string; name: string };
+
+export function computeTypeStats(itemTypes: ItemTypeEntry[]): {
+  typeIcons: ItemTypeEntry[];
+  dominantColor: string;
+} {
+  const counts = new Map<string, ItemTypeEntry & { count: number }>();
+  for (const t of itemTypes) {
+    const existing = counts.get(t.id);
+    if (existing) {
+      existing.count++;
+    } else {
+      counts.set(t.id, { ...t, count: 1 });
+    }
+  }
+  const sorted = [...counts.values()].sort((a, b) => b.count - a.count);
+  return {
+    typeIcons: sorted.slice(0, 4).map(({ id, icon, color, name }) => ({ id, icon, color, name })),
+    dominantColor: sorted[0]?.color ?? "#6b7280",
+  };
+}
+
+// ─── Queries ──────────────────────────────────────────────────
+
 export async function getRecentCollections(
   userId: string,
-  limit = 6
+  limit?: number
 ): Promise<CollectionWithTypes[]> {
   const collections = await prisma.collection.findMany({
     where: { userId },
     orderBy: { updatedAt: "desc" },
-    take: limit,
+    ...(limit !== undefined && { take: limit }),
     select: {
       id: true,
       name: true,
@@ -37,14 +69,7 @@ export async function getRecentCollections(
         select: {
           item: {
             select: {
-              itemType: {
-                select: {
-                  id: true,
-                  icon: true,
-                  color: true,
-                  name: true,
-                },
-              },
+              itemType: { select: { id: true, icon: true, color: true, name: true } },
             },
           },
         },
@@ -53,23 +78,9 @@ export async function getRecentCollections(
   });
 
   return collections.map((col) => {
-    // Count occurrences of each item type
-    const typeCounts = new Map<string, { id: string; icon: string; color: string; name: string; count: number }>();
-
-    for (const { item } of col.items) {
-      const t = item.itemType;
-      const existing = typeCounts.get(t.id);
-      if (existing) {
-        existing.count++;
-      } else {
-        typeCounts.set(t.id, { id: t.id, icon: t.icon, color: t.color, name: t.name, count: 1 });
-      }
-    }
-
-    const sortedTypes = [...typeCounts.values()].sort((a, b) => b.count - a.count);
-    const dominantColor = sortedTypes[0]?.color ?? "#6b7280";
-    const typeIcons = sortedTypes.slice(0, 4).map(({ id, icon, color, name }) => ({ id, icon, color, name }));
-
+    const { typeIcons, dominantColor } = computeTypeStats(
+      col.items.map(({ item }) => item.itemType)
+    );
     return {
       id: col.id,
       name: col.name,
@@ -81,6 +92,50 @@ export async function getRecentCollections(
       dominantColor,
     };
   });
+}
+
+export async function getAllCollections(
+  userId: string
+): Promise<CollectionWithTypes[]> {
+  return getRecentCollections(userId);
+}
+
+export async function getCollectionById(
+  id: string,
+  userId: string
+): Promise<CollectionDetail | null> {
+  const col = await prisma.collection.findFirst({
+    where: { id, userId },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      isFavorite: true,
+      updatedAt: true,
+      items: {
+        orderBy: { item: { updatedAt: "desc" } },
+        select: { item: { select: itemSelect } },
+      },
+    },
+  });
+
+  if (!col) return null;
+
+  const { typeIcons, dominantColor } = computeTypeStats(
+    col.items.map(({ item }) => item.itemType)
+  );
+
+  return {
+    id: col.id,
+    name: col.name,
+    description: col.description,
+    isFavorite: col.isFavorite,
+    updatedAt: col.updatedAt,
+    itemCount: col.items.length,
+    typeIcons,
+    dominantColor,
+    items: col.items.map(({ item }) => mapItem(item)),
+  };
 }
 
 export async function createCollection(

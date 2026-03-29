@@ -55,9 +55,7 @@ export default async function DashboardPage() {
         </div>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {recentCollections.map((collection) => (
-            <Link key={collection.id} href={`/collections/${collection.id}`}>
-              <CollectionCard collection={collection} />
-            </Link>
+            <CollectionCard key={collection.id} collection={collection} />
           ))}
         </div>
       </section>

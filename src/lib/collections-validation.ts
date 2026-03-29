@@ -18,3 +18,8 @@ export function validateCreateCollection(
   }
   return { ok: true, data: parsed.data };
 }
+
+/** Converts empty/whitespace-only strings to null for the description field. */
+export function normalizeDescription(value: string): string | null {
+  return value.trim() || null;
+}

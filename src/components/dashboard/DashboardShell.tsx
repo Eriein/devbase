@@ -12,6 +12,8 @@ import {
 import { cn } from "@/lib/utils";
 import { CreateItemDialog } from "@/components/items/CreateItemDialog";
 import { CreateCollectionDialog } from "@/components/collections/CreateCollectionDialog";
+import { ItemDrawerProvider } from "@/components/items/ItemDrawerProvider";
+import { CommandPalette } from "@/components/search/CommandPalette";
 
 // ─── Context ──────────────────────────────────────────────────
 
@@ -46,6 +48,7 @@ export function DashboardShell({
   const [newItemOpen, setNewItemOpen] = useState(false);
   const [newItemTypeId, setNewItemTypeId] = useState<string | undefined>();
   const [newCollectionOpen, setNewCollectionOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   const toggleSidebar = useCallback(() => {
@@ -65,6 +68,7 @@ export function DashboardShell({
 
   return (
     <CreateItemDialogContext.Provider value={{ openCreateDialog }}>
+    <ItemDrawerProvider>
     <div className="flex h-screen">
       {/* Desktop sidebar */}
       {!isMobile && (
@@ -94,6 +98,7 @@ export function DashboardShell({
           onToggleSidebar={toggleSidebar}
           onNewItem={() => openCreateDialog()}
           onNewCollection={() => setNewCollectionOpen(true)}
+          onOpenSearch={() => setPaletteOpen(true)}
         />
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
@@ -108,7 +113,9 @@ export function DashboardShell({
         open={newCollectionOpen}
         onOpenChange={setNewCollectionOpen}
       />
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </div>
+    </ItemDrawerProvider>
     </CreateItemDialogContext.Provider>
   );
 }

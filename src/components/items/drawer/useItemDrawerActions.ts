@@ -4,8 +4,9 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { ItemDetail } from "@/lib/db/items";
-import { updateItem, deleteItem, toggleItemFavorite } from "@/lib/actions/items";
+import { updateItem, deleteItem, toggleItemFavorite, toggleItemPin } from "@/lib/actions/items";
 import { useToggleFavorite } from "@/hooks/useToggleFavorite";
+import { useToggle } from "@/hooks/useToggle";
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -44,11 +45,22 @@ export function useItemDrawerActions(
   const [editState, setEditState] = useState<EditState | null>(null);
   const [isPending, startTransition] = useTransition();
   const { toggle: toggleFavorite } = useToggleFavorite(toggleItemFavorite);
+  const { toggle: togglePin } = useToggle(toggleItemPin, {
+    true: "Item pinned",
+    false: "Item unpinned",
+  });
 
   const handleToggleFavorite = () => {
     if (!item) return;
     toggleFavorite(item.id, item.isFavorite, (newValue) => {
       setItem({ ...item, isFavorite: newValue });
+    });
+  };
+
+  const handleTogglePin = () => {
+    if (!item) return;
+    togglePin(item.id, item.isPinned, (newValue) => {
+      setItem({ ...item, isPinned: newValue });
     });
   };
 
@@ -135,6 +147,7 @@ export function useItemDrawerActions(
     setEditState,
     handleCopy,
     handleToggleFavorite,
+    handleTogglePin,
     handleEditStart,
     handleEditCancel,
     handleDelete,

@@ -88,6 +88,7 @@ export function ItemDrawer({ itemId, open, onClose }: ItemDrawerProps) {
     setEditState,
     handleCopy,
     handleToggleFavorite,
+    handleTogglePin,
     handleEditStart,
     handleEditCancel,
     handleDelete,
@@ -222,6 +223,7 @@ export function ItemDrawer({ itemId, open, onClose }: ItemDrawerProps) {
                     variant="ghost"
                     size="sm"
                     title="Pin"
+                    onClick={handleTogglePin}
                     className="gap-1.5 text-muted-foreground"
                   >
                     <Pin

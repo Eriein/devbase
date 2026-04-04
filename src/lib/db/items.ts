@@ -98,7 +98,7 @@ export async function getItemsByType(
   userId: string,
   typeId: string
 ): Promise<DashboardItem[]> {
-  return queryItems({ userId, itemTypeId: typeId }, { orderBy: { createdAt: "desc" } });
+  return queryItems({ userId, itemTypeId: typeId }, { orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }] });
 }
 
 export async function getFavoriteItems(userId: string): Promise<DashboardItem[]> {
@@ -115,7 +115,7 @@ export async function getItemsByTypePaginated(
   const [rows, total] = await Promise.all([
     prisma.item.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
       skip,
       take: ITEMS_PER_PAGE,
       select: itemSelect,
@@ -335,6 +335,26 @@ export async function toggleItemFavorite(
   await prisma.item.updateMany({
     where: { id: itemId, userId },
     data: { isFavorite: newValue },
+  });
+  return newValue;
+}
+
+// ─── Toggle pin ─────────────────────────────────────────────────
+
+export async function toggleItemPin(
+  userId: string,
+  itemId: string
+): Promise<boolean | null> {
+  const item = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    select: { isPinned: true },
+  });
+  if (!item) return null;
+
+  const newValue = !item.isPinned;
+  await prisma.item.updateMany({
+    where: { id: itemId, userId },
+    data: { isPinned: newValue },
   });
   return newValue;
 }

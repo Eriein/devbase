@@ -101,6 +101,10 @@ export async function getItemsByType(
   return queryItems({ userId, itemTypeId: typeId }, { orderBy: { createdAt: "desc" } });
 }
 
+export async function getFavoriteItems(userId: string): Promise<DashboardItem[]> {
+  return queryItems({ userId, isFavorite: true }, { orderBy: { updatedAt: "desc" } });
+}
+
 export async function getItemsByTypePaginated(
   userId: string,
   typeId: string,

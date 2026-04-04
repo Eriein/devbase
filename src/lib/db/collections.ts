@@ -102,6 +102,47 @@ export async function getAllCollections(
   return getRecentCollections(userId);
 }
 
+export async function getFavoriteCollections(
+  userId: string
+): Promise<CollectionWithTypes[]> {
+  const collections = await prisma.collection.findMany({
+    where: { userId, isFavorite: true },
+    orderBy: { updatedAt: "desc" },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      isFavorite: true,
+      updatedAt: true,
+      items: {
+        select: {
+          item: {
+            select: {
+              itemType: { select: { id: true, icon: true, color: true, name: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return collections.map((col) => {
+    const { typeIcons, dominantColor } = computeTypeStats(
+      col.items.map(({ item }) => item.itemType)
+    );
+    return {
+      id: col.id,
+      name: col.name,
+      description: col.description,
+      isFavorite: col.isFavorite,
+      updatedAt: col.updatedAt,
+      itemCount: col.items.length,
+      typeIcons,
+      dominantColor,
+    };
+  });
+}
+
 export async function getCollectionById(
   id: string,
   userId: string,

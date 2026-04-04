@@ -1,5 +1,7 @@
-import { Search, Plus, FolderPlus, PanelLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search, Plus, FolderPlus, PanelLeft, Star } from "lucide-react";
+import Link from "next/link";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface TopBarProps {
   onToggleSidebar: () => void;
@@ -38,6 +40,13 @@ export function TopBar({ onToggleSidebar, onNewItem, onNewCollection, onOpenSear
         </Button>
       </div>
       <div className="flex items-center justify-end gap-2">
+        <Link
+          href="/favorites"
+          aria-label="Favorites"
+          className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }))}
+        >
+          <Star className="size-4" />
+        </Link>
         <Button variant="outline" size="sm" className="gap-1.5" onClick={onNewItem}>
           <Plus className="size-3.5" />
           <span>New Item</span>

@@ -5,6 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/** Parses an optional URL search-param string into a safe page number (≥ 1). */
+export function parsePage(param: string | undefined): number {
+  return Math.max(1, Number(param ?? 1) || 1);
+}
+
 export function formatFileSize(bytes: number | null): string {
   if (bytes == null) return "—";
   if (bytes < 1024) return `${bytes} B`;

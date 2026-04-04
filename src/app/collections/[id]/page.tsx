@@ -2,24 +2,32 @@ import { notFound } from "next/navigation";
 import { Star, ImageIcon, Paperclip } from "lucide-react";
 import { auth } from "@/auth";
 import { getCollectionById } from "@/lib/db/collections";
+import { COLLECTIONS_PER_PAGE } from "@/lib/constants";
+import { parsePage } from "@/lib/utils";
 import { iconMap, isImageType, isFileType } from "@/lib/item-type-helpers";
 import { ItemCard } from "@/components/items/ItemCard";
 import { ImageThumbnailCard } from "@/components/items/ImageThumbnailCard";
 import { FileListRow } from "@/components/items/FileListRow";
 import { CollectionActions } from "@/components/collections/CollectionActions";
+import { Pagination } from "@/components/ui/Pagination";
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ page?: string }>;
 }
 
-export default async function CollectionDetailPage({ params }: PageProps) {
+export default async function CollectionDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const { page: pageParam } = await searchParams;
 
   const session = await auth();
   if (!session?.user?.id) notFound();
 
-  const collection = await getCollectionById(id, session.user.id);
+  const page = parsePage(pageParam);
+  const collection = await getCollectionById(id, session.user.id, page);
   if (!collection) notFound();
+
+  const totalPages = Math.ceil(collection.total / COLLECTIONS_PER_PAGE);
 
   const images = collection.items.filter((i) => isImageType(i.itemType.name));
   const files  = collection.items.filter((i) => isFileType(i.itemType.name));
@@ -77,7 +85,7 @@ export default async function CollectionDetailPage({ params }: PageProps) {
       </div>
 
       {/* Empty state */}
-      {collection.items.length === 0 && (
+      {collection.total === 0 && (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16">
           <p className="text-sm text-muted-foreground">
             No items in this collection yet.
@@ -136,6 +144,8 @@ export default async function CollectionDetailPage({ params }: PageProps) {
           </div>
         </section>
       )}
+
+      <Pagination currentPage={page} totalPages={totalPages} />
     </div>
   );
 }

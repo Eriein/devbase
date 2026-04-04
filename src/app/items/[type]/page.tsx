@@ -1,18 +1,23 @@
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { iconMap } from "@/lib/item-type-helpers";
-import { getItemsByType, getItemTypeBySlug } from "@/lib/db/items";
+import { getItemsByTypePaginated, getItemTypeBySlug } from "@/lib/db/items";
+import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { parsePage } from "@/lib/utils";
 import { ItemCard } from "@/components/items/ItemCard";
 import { ImageThumbnailCard } from "@/components/items/ImageThumbnailCard";
 import { FileListRow } from "@/components/items/FileListRow";
 import { NewItemButton } from "@/components/items/NewItemButton";
+import { Pagination } from "@/components/ui/Pagination";
 
 interface PageProps {
   params: Promise<{ type: string }>;
+  searchParams: Promise<{ page?: string }>;
 }
 
-export default async function ItemsByTypePage({ params }: PageProps) {
+export default async function ItemsByTypePage({ params, searchParams }: PageProps) {
   const { type } = await params;
+  const { page: pageParam } = await searchParams;
 
   const session = await auth();
   if (!session?.user?.id) notFound();
@@ -20,7 +25,9 @@ export default async function ItemsByTypePage({ params }: PageProps) {
   const itemType = await getItemTypeBySlug(type);
   if (!itemType) notFound();
 
-  const items = await getItemsByType(session.user.id, itemType.id);
+  const page = parsePage(pageParam);
+  const { items, total } = await getItemsByTypePaginated(session.user.id, itemType.id, page);
+  const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
 
   const typeName = type.charAt(0).toUpperCase() + type.slice(1);
   const Icon = iconMap[itemType.icon];
@@ -36,7 +43,7 @@ export default async function ItemsByTypePage({ params }: PageProps) {
         </div>
         <h1 className="text-xl font-semibold text-foreground">{typeName}</h1>
         <span className="text-sm text-muted-foreground">
-          {items.length} {items.length === 1 ? "item" : "items"}
+          {total} {total === 1 ? "item" : "items"}
         </span>
         <div className="flex-1" />
         <NewItemButton
@@ -46,7 +53,7 @@ export default async function ItemsByTypePage({ params }: PageProps) {
         />
       </div>
 
-      {items.length === 0 ? (
+      {total === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16">
           <p className="text-sm text-muted-foreground">
             No {type} yet. Create your first one!
@@ -71,6 +78,8 @@ export default async function ItemsByTypePage({ params }: PageProps) {
           ))}
         </div>
       )}
+
+      <Pagination currentPage={page} totalPages={totalPages} />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { ITEMS_PER_PAGE } from "@/lib/constants";
 
 export type DashboardItem = {
   id: string;
@@ -98,6 +99,26 @@ export async function getItemsByType(
   typeId: string
 ): Promise<DashboardItem[]> {
   return queryItems({ userId, itemTypeId: typeId }, { orderBy: { createdAt: "desc" } });
+}
+
+export async function getItemsByTypePaginated(
+  userId: string,
+  typeId: string,
+  page: number
+): Promise<{ items: DashboardItem[]; total: number }> {
+  const skip = (page - 1) * ITEMS_PER_PAGE;
+  const where = { userId, itemTypeId: typeId };
+  const [rows, total] = await Promise.all([
+    prisma.item.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: ITEMS_PER_PAGE,
+      select: itemSelect,
+    }),
+    prisma.item.count({ where }),
+  ]);
+  return { items: rows.map(mapItem), total };
 }
 
 export async function getItemTypeBySlug(slug: string) {

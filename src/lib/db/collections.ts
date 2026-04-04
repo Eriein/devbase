@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import type { CreateCollectionInput } from "@/lib/collections-validation";
 import type { DashboardItem } from "@/lib/db/items";
 import { mapItem, itemSelect } from "@/lib/db/items";
+import { COLLECTIONS_PER_PAGE } from "@/lib/constants";
 
 export type CollectionWithTypes = {
   id: string;
@@ -23,6 +24,7 @@ export type CollectionWithTypes = {
 
 export type CollectionDetail = CollectionWithTypes & {
   items: DashboardItem[];
+  total: number;
 };
 
 // ─── Pure helpers ─────────────────────────────────────────────
@@ -102,8 +104,10 @@ export async function getAllCollections(
 
 export async function getCollectionById(
   id: string,
-  userId: string
+  userId: string,
+  page = 1
 ): Promise<CollectionDetail | null> {
+  // First verify ownership and get metadata + total count
   const col = await prisma.collection.findFirst({
     where: { id, userId },
     select: {
@@ -112,17 +116,37 @@ export async function getCollectionById(
       description: true,
       isFavorite: true,
       updatedAt: true,
-      items: {
-        orderBy: { item: { updatedAt: "desc" } },
-        select: { item: { select: itemSelect } },
-      },
+      _count: { select: { items: true } },
     },
   });
-
   if (!col) return null;
 
+  const skip = (page - 1) * COLLECTIONS_PER_PAGE;
+
+  // Lightweight type rows (all items, just type info for dominant color)
+  // + paginated full item rows — fetched in parallel
+  const [typeRows, pageRows] = await Promise.all([
+    prisma.itemCollection.findMany({
+      where: { collectionId: id },
+      select: {
+        item: {
+          select: {
+            itemType: { select: { id: true, icon: true, color: true, name: true } },
+          },
+        },
+      },
+    }),
+    prisma.itemCollection.findMany({
+      where: { collectionId: id },
+      orderBy: { item: { updatedAt: "desc" } },
+      skip,
+      take: COLLECTIONS_PER_PAGE,
+      select: { item: { select: itemSelect } },
+    }),
+  ]);
+
   const { typeIcons, dominantColor } = computeTypeStats(
-    col.items.map(({ item }) => item.itemType)
+    typeRows.map(({ item }) => item.itemType)
   );
 
   return {
@@ -131,10 +155,11 @@ export async function getCollectionById(
     description: col.description,
     isFavorite: col.isFavorite,
     updatedAt: col.updatedAt,
-    itemCount: col.items.length,
+    itemCount: col._count.items,
+    total: col._count.items,
     typeIcons,
     dominantColor,
-    items: col.items.map(({ item }) => mapItem(item)),
+    items: pageRows.map(({ item }) => mapItem(item)),
   };
 }
 

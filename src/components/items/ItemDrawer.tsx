@@ -87,6 +87,7 @@ export function ItemDrawer({ itemId, open, onClose }: ItemDrawerProps) {
     isPending,
     setEditState,
     handleCopy,
+    handleToggleFavorite,
     handleEditStart,
     handleEditCancel,
     handleDelete,
@@ -205,6 +206,7 @@ export function ItemDrawer({ itemId, open, onClose }: ItemDrawerProps) {
                     variant="ghost"
                     size="sm"
                     title="Favorite"
+                    onClick={handleToggleFavorite}
                     className="gap-1.5 text-muted-foreground"
                   >
                     <Star

@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Pencil, Trash2, Star } from "lucide-react";
 import {
   AlertDialog,
@@ -15,30 +14,32 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { deleteCollection } from "@/lib/actions/collections";
+import { deleteCollection, toggleCollectionFavorite } from "@/lib/actions/collections";
 import { EditCollectionDialog } from "@/components/collections/EditCollectionDialog";
+import { useToggleFavorite } from "@/hooks/useToggleFavorite";
 
 interface CollectionActionsProps {
   id: string;
   name: string;
   description: string | null;
+  isFavorite: boolean;
 }
 
-export function CollectionActions({ id, name, description }: CollectionActionsProps) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+export function CollectionActions({ id, name, description, isFavorite: initialFavorite }: CollectionActionsProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(initialFavorite);
+  const { toggle: toggleFavorite, isPending } = useToggleFavorite(toggleCollectionFavorite);
 
   function handleDelete() {
-    startTransition(async () => {
-      const result = await deleteCollection(id);
-      if (!result.success) {
-        toast.error(result.error);
-        return;
-      }
-      toast.success("Collection deleted");
-      router.push("/collections");
+    toast.promise(deleteCollection(id), {
+      success: () => {
+        return "Collection deleted";
+      },
+      error: (err) => err,
+      finally: () => {
+        window.location.href = "/collections";
+      },
     });
   }
 
@@ -48,10 +49,16 @@ export function CollectionActions({ id, name, description }: CollectionActionsPr
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => toast.info("Favorites coming soon")}
-          aria-label="Favorite collection"
+          onClick={() => toggleFavorite(id, isFavorite, setIsFavorite)}
+          aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
         >
-          <Star className="size-4" />
+          <Star
+            className={
+              isFavorite
+                ? "size-4 fill-amber-400 text-amber-400"
+                : "size-4"
+            }
+          />
         </Button>
         <Button variant="ghost" size="sm" onClick={() => setEditOpen(true)} aria-label="Edit collection">
           <Pencil className="size-4" />

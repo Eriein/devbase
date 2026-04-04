@@ -6,6 +6,7 @@ import {
   updateItem as dbUpdateItem,
   deleteItem as dbDeleteItem,
   getItemFileKey,
+  toggleItemFavorite as dbToggleItemFavorite,
 } from "@/lib/db/items";
 import {
   validateCreateItem,
@@ -27,7 +28,26 @@ export type DeleteItemResult =
   | { success: true }
   | { success: false; error: string };
 
+export type ToggleFavoriteResult =
+  | { success: true; isFavorite: boolean }
+  | { success: false; error: string };
+
 // ─── Server actions ───────────────────────────────────────────
+
+export async function toggleItemFavorite(
+  itemId: string
+): Promise<ToggleFavoriteResult> {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+
+  try {
+    const newValue = await dbToggleItemFavorite(session.user.id, itemId);
+    if (newValue === null) return { success: false, error: "Item not found" };
+    return { success: true, isFavorite: newValue };
+  } catch {
+    return { success: false, error: "Failed to toggle favorite" };
+  }
+}
 
 export async function createItem(
   input: CreateItemInput

@@ -4,7 +4,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { ItemDetail } from "@/lib/db/items";
-import { updateItem, deleteItem } from "@/lib/actions/items";
+import { updateItem, deleteItem, toggleItemFavorite } from "@/lib/actions/items";
+import { useToggleFavorite } from "@/hooks/useToggleFavorite";
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -42,6 +43,14 @@ export function useItemDrawerActions(
   const [isEditing, setIsEditing] = useState(false);
   const [editState, setEditState] = useState<EditState | null>(null);
   const [isPending, startTransition] = useTransition();
+  const { toggle: toggleFavorite } = useToggleFavorite(toggleItemFavorite);
+
+  const handleToggleFavorite = () => {
+    if (!item) return;
+    toggleFavorite(item.id, item.isFavorite, (newValue) => {
+      setItem({ ...item, isFavorite: newValue });
+    });
+  };
 
   const handleCopy = () => {
     const text = item?.content ?? item?.url ?? "";
@@ -125,6 +134,7 @@ export function useItemDrawerActions(
     isPending,
     setEditState,
     handleCopy,
+    handleToggleFavorite,
     handleEditStart,
     handleEditCancel,
     handleDelete,

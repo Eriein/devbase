@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Star, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import {
@@ -22,8 +22,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { iconMap } from "@/lib/item-type-helpers";
-import { deleteCollection } from "@/lib/actions/collections";
+import { deleteCollection, toggleCollectionFavorite } from "@/lib/actions/collections";
 import { EditCollectionDialog } from "@/components/collections/EditCollectionDialog";
+import { useToggleFavorite } from "@/hooks/useToggleFavorite";
 import type { CollectionWithTypes } from "@/lib/db/collections";
 
 interface CollectionCardProps {
@@ -32,19 +33,15 @@ interface CollectionCardProps {
 
 export function CollectionCard({ collection }: CollectionCardProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(collection.isFavorite);
+  const { toggle: toggleFavorite, isPending } = useToggleFavorite(toggleCollectionFavorite);
 
   function handleDelete() {
-    startTransition(async () => {
-      const result = await deleteCollection(collection.id);
-      if (!result.success) {
-        toast.error(result.error);
-        return;
-      }
-      toast.success("Collection deleted");
-      router.refresh();
+    toast.promise(deleteCollection(collection.id), {
+      success: () => "Collection deleted",
+      error: (err) => err,
     });
   }
 
@@ -59,7 +56,7 @@ export function CollectionCard({ collection }: CollectionCardProps) {
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-medium text-foreground">{collection.name}</h3>
           <div className="flex items-center gap-1">
-            {collection.isFavorite && (
+            {isFavorite && (
               <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" />
             )}
             {/* 3-dots menu */}
@@ -79,9 +76,15 @@ export function CollectionCard({ collection }: CollectionCardProps) {
                   <Pencil className="mr-2 size-3.5" />
                   Edit
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => toast.info("Favorites coming soon")}>
-                  <Star className="mr-2 size-3.5" />
-                  Favorite
+                <DropdownMenuItem onClick={() => toggleFavorite(collection.id, isFavorite, setIsFavorite)}>
+                  <Star
+                    className={
+                      isFavorite
+                        ? "mr-2 size-3.5 fill-amber-400 text-amber-400"
+                        : "mr-2 size-3.5"
+                    }
+                  />
+                  {isFavorite ? "Unfavorite" : "Favorite"}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

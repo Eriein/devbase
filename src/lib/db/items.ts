@@ -319,6 +319,26 @@ export async function deleteItem(
   return deleted.count > 0;
 }
 
+// ─── Toggle favorite ────────────────────────────────────────
+
+export async function toggleItemFavorite(
+  userId: string,
+  itemId: string
+): Promise<boolean | null> {
+  const item = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    select: { isFavorite: true },
+  });
+  if (!item) return null;
+
+  const newValue = !item.isFavorite;
+  await prisma.item.updateMany({
+    where: { id: itemId, userId },
+    data: { isFavorite: newValue },
+  });
+  return newValue;
+}
+
 // ─── Stats ───────────────────────────────────────────────────
 
 export async function getItemStats(userId: string) {

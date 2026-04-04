@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Star, ImageIcon, Paperclip } from "lucide-react";
+import { ImageIcon, Paperclip } from "lucide-react";
 import { auth } from "@/auth";
 import { getCollectionById } from "@/lib/db/collections";
 import { COLLECTIONS_PER_PAGE } from "@/lib/constants";
@@ -58,18 +58,14 @@ export default async function CollectionDetailPage({ params, searchParams }: Pag
         </div>
         <div className="flex-1">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold text-foreground">
-                {collection.name}
-              </h1>
-              {collection.isFavorite && (
-                <Star className="size-4 fill-amber-400 text-amber-400" />
-              )}
-            </div>
+            <h1 className="text-xl font-semibold text-foreground">
+              {collection.name}
+            </h1>
             <CollectionActions
               id={collection.id}
               name={collection.name}
               description={collection.description}
+              isFavorite={collection.isFavorite}
             />
           </div>
           {collection.description && (

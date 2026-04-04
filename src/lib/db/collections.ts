@@ -251,6 +251,24 @@ export async function getUserCollections(
   });
 }
 
+export async function toggleCollectionFavorite(
+  id: string,
+  userId: string
+): Promise<boolean | null> {
+  const col = await prisma.collection.findFirst({
+    where: { id, userId },
+    select: { isFavorite: true },
+  });
+  if (!col) return null;
+
+  const newValue = !col.isFavorite;
+  await prisma.collection.updateMany({
+    where: { id, userId },
+    data: { isFavorite: newValue },
+  });
+  return newValue;
+}
+
 export async function getCollectionStats(userId: string) {
   const [totalCollections, favoriteCollections] = await Promise.all([
     prisma.collection.count({ where: { userId } }),

@@ -5,6 +5,7 @@ import {
   createCollection as dbCreateCollection,
   updateCollection as dbUpdateCollection,
   deleteCollection as dbDeleteCollection,
+  toggleCollectionFavorite as dbToggleCollectionFavorite,
 } from "@/lib/db/collections";
 import { validateCreateCollection } from "@/lib/collections-validation";
 import type { CreateCollectionInput } from "@/lib/collections-validation";
@@ -19,7 +20,26 @@ export type ActionResult =
   | { success: true }
   | { success: false; error: string };
 
+export type ToggleFavoriteResult =
+  | { success: true; isFavorite: boolean }
+  | { success: false; error: string };
+
 // ─── Server actions ───────────────────────────────────────────
+
+export async function toggleCollectionFavorite(
+  id: string
+): Promise<ToggleFavoriteResult> {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+
+  try {
+    const newValue = await dbToggleCollectionFavorite(id, session.user.id);
+    if (newValue === null) return { success: false, error: "Collection not found" };
+    return { success: true, isFavorite: newValue };
+  } catch {
+    return { success: false, error: "Failed to toggle favorite" };
+  }
+}
 
 export async function updateCollection(
   id: string,

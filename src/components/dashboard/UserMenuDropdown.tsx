@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronsUpDown, LogOut, User } from "lucide-react";
+import { ChevronsUpDown, LogOut, Settings, User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,6 +58,10 @@ export function UserMenuDropdown({
           <DropdownMenuItem onClick={() => (window.location.href = "/profile")}>
             <User className="size-4" />
             Profile
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => (window.location.href = "/settings")}>
+            <Settings className="size-4" />
+            Settings
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => signOutAction()}>

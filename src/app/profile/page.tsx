@@ -11,8 +11,6 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { getProfileUser, getItemTypeBreakdown } from "@/lib/db/profile";
 import { getItemStats } from "@/lib/db/items";
 import { getCollectionStats } from "@/lib/db/collections";
-import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
-import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
 
 // ─── Page ─────────────────────────────────────────────────────
 
@@ -43,7 +41,7 @@ export default async function ProfilePage() {
       <div>
         <h1 className="text-xl font-semibold text-foreground">Profile</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Manage your account and view your usage stats.
+          View your profile and usage stats.
         </p>
       </div>
 
@@ -147,41 +145,6 @@ export default async function ProfilePage() {
         </div>
       </section>
 
-      {/* Account Actions */}
-      <section className="space-y-4">
-        <h2 className="text-base font-semibold text-foreground">
-          Account
-        </h2>
-
-        {/* Change Password — only for email/password users */}
-        {user.password && (
-          <div className="rounded-lg border border-border bg-card p-6">
-            <h3 className="text-sm font-medium text-foreground">
-              Change Password
-            </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Update your password to keep your account secure.
-            </p>
-            <div className="mt-4">
-              <ChangePasswordForm />
-            </div>
-          </div>
-        )}
-
-        {/* Delete Account */}
-        <div className="rounded-lg border border-destructive/30 bg-card p-6">
-          <h3 className="text-sm font-medium text-destructive">
-            Delete Account
-          </h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Permanently delete your account and all of your data. This action
-            cannot be undone.
-          </p>
-          <div className="mt-4">
-            <DeleteAccountDialog hasPassword={!!user.password} />
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

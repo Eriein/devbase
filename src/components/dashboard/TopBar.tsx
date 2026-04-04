@@ -1,6 +1,12 @@
 import { Search, Plus, FolderPlus, PanelLeft, Star } from "lucide-react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 interface TopBarProps {
@@ -12,19 +18,22 @@ interface TopBarProps {
 
 export function TopBar({ onToggleSidebar, onNewItem, onNewCollection, onOpenSearch }: TopBarProps) {
   return (
-    <header className="grid h-14 grid-cols-3 items-center border-b border-border px-6">
+    <header className="flex h-14 items-center justify-between border-b border-border px-4 sm:px-6">
+      {/* Left: sidebar toggle + title */}
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon-sm" onClick={onToggleSidebar}>
           <PanelLeft className="size-4" />
         </Button>
         <div>
           <h1 className="text-base font-semibold leading-tight">Dashboard</h1>
-          <p className="text-xs text-muted-foreground">
+          <p className="hidden text-xs text-muted-foreground sm:block">
             Your developer knowledge hub
           </p>
         </div>
       </div>
-      <div className="flex justify-center">
+
+      {/* Center: search (hidden on mobile, shown on sm+) */}
+      <div className="hidden sm:flex sm:flex-1 sm:justify-center">
         <Button variant="outline" size="sm" className="gap-2" onClick={onOpenSearch}>
           <Search className="size-3.5" />
           <span>Search</span>
@@ -39,7 +48,20 @@ export function TopBar({ onToggleSidebar, onNewItem, onNewCollection, onOpenSear
           </span>
         </Button>
       </div>
-      <div className="flex items-center justify-end gap-2">
+
+      {/* Right: actions */}
+      <div className="flex items-center gap-2">
+        {/* Search icon-only on mobile */}
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="sm:hidden"
+          onClick={onOpenSearch}
+          aria-label="Search"
+        >
+          <Search className="size-4" />
+        </Button>
+
         <Link
           href="/favorites"
           aria-label="Favorites"
@@ -47,13 +69,35 @@ export function TopBar({ onToggleSidebar, onNewItem, onNewCollection, onOpenSear
         >
           <Star className="size-4" />
         </Link>
-        <Button variant="outline" size="sm" className="gap-1.5" onClick={onNewItem}>
+
+        {/* Combined + dropdown on mobile */}
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            className={cn(buttonVariants({ variant: "outline", size: "icon-sm" }), "sm:hidden")}
+            aria-label="New"
+          >
+            <Plus className="size-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={onNewItem}>
+              <Plus className="mr-2 size-3.5" />
+              New Item
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onNewCollection}>
+              <FolderPlus className="mr-2 size-3.5" />
+              New Collection
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Separate labeled buttons on sm+ */}
+        <Button variant="outline" size="sm" className="hidden gap-1.5 sm:flex" onClick={onNewItem}>
           <Plus className="size-3.5" />
-          <span>New Item</span>
+          New Item
         </Button>
-        <Button variant="ghost" size="sm" className="gap-1.5" onClick={onNewCollection}>
+        <Button variant="ghost" size="sm" className="hidden gap-1.5 sm:flex" onClick={onNewCollection}>
           <FolderPlus className="size-3.5" />
-          <span>New Collection</span>
+          New Collection
         </Button>
       </div>
     </header>

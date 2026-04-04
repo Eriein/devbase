@@ -14,6 +14,11 @@ import { CreateItemDialog } from "@/components/items/CreateItemDialog";
 import { CreateCollectionDialog } from "@/components/collections/CreateCollectionDialog";
 import { ItemDrawerProvider } from "@/components/items/ItemDrawerProvider";
 import { CommandPalette } from "@/components/search/CommandPalette";
+import { EditorPreferencesProvider } from "@/components/editor/EditorPreferencesContext";
+import {
+  type EditorPreferences,
+  DEFAULT_EDITOR_PREFERENCES,
+} from "@/types/editor-preferences";
 
 // ─── Context ──────────────────────────────────────────────────
 
@@ -34,6 +39,7 @@ export function useCreateItemDialog() {
 
 interface DashboardShellProps extends SidebarData {
   children: React.ReactNode;
+  initialEditorPreferences?: EditorPreferences;
 }
 
 export function DashboardShell({
@@ -42,6 +48,7 @@ export function DashboardShell({
   sidebarCollections,
   userName,
   userImage,
+  initialEditorPreferences,
 }: DashboardShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -67,6 +74,7 @@ export function DashboardShell({
   const sidebarData: SidebarData = { sidebarItemTypes, sidebarCollections, userName, userImage };
 
   return (
+    <EditorPreferencesProvider initial={initialEditorPreferences ?? DEFAULT_EDITOR_PREFERENCES}>
     <CreateItemDialogContext.Provider value={{ openCreateDialog }}>
     <ItemDrawerProvider>
     <div className="flex h-screen">
@@ -117,5 +125,6 @@ export function DashboardShell({
     </div>
     </ItemDrawerProvider>
     </CreateItemDialogContext.Provider>
+    </EditorPreferencesProvider>
   );
 }

@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { type EditorPreferences } from "@/types/editor-preferences";
+import { parseStoredPreferences } from "@/lib/editor-preferences-validation";
 
 export type ProfileUser = {
   id: string;
@@ -39,6 +41,17 @@ export async function getProfileUser(userId: string): Promise<ProfileUser | null
     password: !!user.password,
     createdAt: user.createdAt,
   };
+}
+
+export async function getEditorPreferences(
+  userId: string
+): Promise<EditorPreferences> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { editorPreferences: true },
+  });
+
+  return parseStoredPreferences(user?.editorPreferences ?? null);
 }
 
 export async function getItemTypeBreakdown(userId: string): Promise<ItemTypeCount[]> {

@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { getProfileUser } from "@/lib/db/profile";
 import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
+import { EditorPreferencesForm } from "@/components/settings/EditorPreferencesForm";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -20,6 +21,23 @@ export default async function SettingsPage() {
           Manage your account security and preferences.
         </p>
       </div>
+
+      {/* Editor */}
+      <section className="space-y-4">
+        <h2 className="text-base font-semibold text-foreground">Editor</h2>
+        <div className="rounded-lg border border-border bg-card p-6">
+          <h3 className="text-sm font-medium text-foreground">
+            Editor Preferences
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Customize the code editor appearance and behavior. Changes are saved
+            automatically.
+          </p>
+          <div className="mt-5">
+            <EditorPreferencesForm />
+          </div>
+        </div>
+      </section>
 
       {/* Account */}
       <section className="space-y-4">

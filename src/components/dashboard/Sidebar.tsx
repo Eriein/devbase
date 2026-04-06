@@ -22,11 +22,8 @@ export interface SidebarData {
 
 interface SidebarProps extends SidebarData {
   collapsed: boolean;
+  isPro: boolean;
 }
-
-// ─── Helpers ──────────────────────────────────────────────────
-
-const PRO_TYPES = new Set(["file", "image"]);
 
 // ─── Component ────────────────────────────────────────────────
 
@@ -36,6 +33,7 @@ export function Sidebar({
   sidebarCollections,
   userName,
   userImage,
+  isPro,
 }: SidebarProps) {
   return (
     <div className="flex h-full flex-col">
@@ -67,15 +65,21 @@ export function Sidebar({
             <div className="space-y-0.5">
               {sidebarItemTypes.map((type) => {
                 const Icon = iconMap[type.icon];
-                const isPro = PRO_TYPES.has(type.name.toLowerCase());
 
                 return (
                   <Link
                     key={type.id}
-                    href={`/items/${type.name.toLowerCase()}s`}
+                    href={type.isPro && !isPro ? "#" : `/items/${type.name.toLowerCase()}s`}
+                    onClick={(e) => {
+                      if (type.isPro && !isPro) {
+                        e.preventDefault();
+                        window.location.href = "/settings";
+                      }
+                    }}
                     className={cn(
                       "flex items-center gap-3 rounded-md px-2.5 py-1.5 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors",
-                      collapsed && "justify-center px-2"
+                      collapsed && "justify-center px-2",
+                      type.isPro && !isPro && "cursor-not-allowed opacity-50"
                     )}
                   >
                     {Icon && (
@@ -88,7 +92,7 @@ export function Sidebar({
                       <>
                         <span className="flex-1 capitalize">{type.name}s</span>
                         <span className="flex items-center gap-1.5">
-                          {isPro && (
+                          {type.isPro && !isPro && (
                             <Badge
                               variant="outline"
                               className="h-auto px-1.5 py-0.5 text-[10px] font-semibold"

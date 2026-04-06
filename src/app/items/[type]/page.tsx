@@ -9,6 +9,7 @@ import { ImageThumbnailCard } from "@/components/items/ImageThumbnailCard";
 import { FileListRow } from "@/components/items/FileListRow";
 import { NewItemButton } from "@/components/items/NewItemButton";
 import { Pagination } from "@/components/ui/Pagination";
+import { UpgradeRequired } from "@/components/ui/UpgradeRequired";
 
 interface PageProps {
   params: Promise<{ type: string }>;
@@ -24,6 +25,11 @@ export default async function ItemsByTypePage({ params, searchParams }: PageProp
 
   const itemType = await getItemTypeBySlug(type);
   if (!itemType) notFound();
+
+  const isProOnlyType = itemType.name === "file" || itemType.name === "image";
+  if (isProOnlyType && !session.user.isPro) {
+    return <UpgradeRequired feature={itemType.name === "file" ? "file uploads" : "image uploads"} />;
+  }
 
   const page = parsePage(pageParam);
   const { items, total } = await getItemsByTypePaginated(session.user.id, itemType.id, page);

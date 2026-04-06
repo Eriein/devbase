@@ -40,6 +40,7 @@ export function useCreateItemDialog() {
 interface DashboardShellProps extends SidebarData {
   children: React.ReactNode;
   initialEditorPreferences?: EditorPreferences;
+  isPro: boolean;
 }
 
 export function DashboardShell({
@@ -49,6 +50,7 @@ export function DashboardShell({
   userName,
   userImage,
   initialEditorPreferences,
+  isPro,
 }: DashboardShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -86,7 +88,7 @@ export function DashboardShell({
             collapsed ? "w-14" : "w-60"
           )}
         >
-          <Sidebar collapsed={collapsed} {...sidebarData} />
+          <Sidebar collapsed={collapsed} {...sidebarData} isPro={isPro} />
         </aside>
       )}
 
@@ -95,7 +97,7 @@ export function DashboardShell({
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetContent side="left" className="w-60 p-0 bg-sidebar">
             <SheetTitle className="sr-only">Navigation</SheetTitle>
-            <Sidebar collapsed={false} {...sidebarData} />
+            <Sidebar collapsed={false} {...sidebarData} isPro={isPro} />
           </SheetContent>
         </Sheet>
       )}

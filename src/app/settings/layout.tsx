@@ -28,6 +28,7 @@ export default async function SettingsLayout({
       userName={session.user.name ?? ""}
       userImage={session.user.image ?? null}
       initialEditorPreferences={editorPreferences}
+      isPro={session.user.isPro}
     >
       {children}
     </DashboardShell>

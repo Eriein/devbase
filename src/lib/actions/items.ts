@@ -16,6 +16,9 @@ import {
 import type { CreateItemInput, UpdateItemInput } from "@/lib/items-validation";
 import type { ItemDetail } from "@/lib/db/items";
 import { deleteFromR2 } from "@/lib/r2";
+import { isAtItemLimit, canUploadFiles, itemLimitMessage } from "@/lib/usage-limits";
+import { FREE_ITEMS_LIMIT } from "@/lib/constants";
+import { prisma } from "@/lib/prisma";
 
 export type CreateItemResult =
   | { success: true; data: ItemDetail }
@@ -74,6 +77,19 @@ export async function createItem(
 ): Promise<CreateItemResult> {
   const session = await auth();
   if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+
+  // Pro gate: file/image items require Pro
+  if (input.fileUrl && !canUploadFiles(session.user.isPro)) {
+    return { success: false, error: "File uploads require a Pro subscription" };
+  }
+
+  // Free tier item count limit
+  if (!session.user.isPro) {
+    const count = await prisma.item.count({ where: { userId: session.user.id } });
+    if (isAtItemLimit(false, count)) {
+      return { success: false, error: itemLimitMessage(FREE_ITEMS_LIMIT) };
+    }
+  }
 
   const validation = validateCreateItem(input);
   if (!validation.ok) return { success: false, error: validation.error };

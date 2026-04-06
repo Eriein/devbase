@@ -1,15 +1,23 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getProfileUser } from "@/lib/db/profile";
+import { getUserStripeInfo } from "@/lib/db/subscriptions";
+import { prisma } from "@/lib/prisma";
 import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
 import { EditorPreferencesForm } from "@/components/settings/EditorPreferencesForm";
+import { SubscriptionSection } from "@/components/settings/SubscriptionSection";
 
 export default async function SettingsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/sign-in");
 
-  const user = await getProfileUser(session.user.id);
+  const [user, stripeInfo, itemCount, collectionCount] = await Promise.all([
+    getProfileUser(session.user.id),
+    getUserStripeInfo(session.user.id),
+    prisma.item.count({ where: { userId: session.user.id } }),
+    prisma.collection.count({ where: { userId: session.user.id } }),
+  ]);
   if (!user) return null;
 
   return (
@@ -21,6 +29,19 @@ export default async function SettingsPage() {
           Manage your account security and preferences.
         </p>
       </div>
+
+      {/* Subscription */}
+      <section className="space-y-4">
+        <h2 className="text-base font-semibold text-foreground">
+          Subscription
+        </h2>
+        <SubscriptionSection
+          isPro={session.user.isPro}
+          hasStripeCustomer={!!stripeInfo?.stripeCustomerId}
+          itemCount={itemCount}
+          collectionCount={collectionCount}
+        />
+      </section>
 
       {/* Editor */}
       <section className="space-y-4">

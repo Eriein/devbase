@@ -9,6 +9,9 @@ import {
 } from "@/lib/db/collections";
 import { validateCreateCollection } from "@/lib/collections-validation";
 import type { CreateCollectionInput } from "@/lib/collections-validation";
+import { isAtCollectionLimit, collectionLimitMessage } from "@/lib/usage-limits";
+import { FREE_COLLECTIONS_LIMIT } from "@/lib/constants";
+import { prisma } from "@/lib/prisma";
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -76,6 +79,14 @@ export async function createCollection(
 ): Promise<CreateCollectionResult> {
   const session = await auth();
   if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+
+  // Free tier collection count limit
+  if (!session.user.isPro) {
+    const count = await prisma.collection.count({ where: { userId: session.user.id } });
+    if (isAtCollectionLimit(false, count)) {
+      return { success: false, error: collectionLimitMessage(FREE_COLLECTIONS_LIMIT) };
+    }
+  }
 
   const validation = validateCreateCollection(input);
   if (!validation.ok) return { success: false, error: validation.error };

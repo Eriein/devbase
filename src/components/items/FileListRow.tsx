@@ -5,13 +5,14 @@ import type { DashboardItem } from "@/lib/db/items";
 import { useItemDrawer } from "./ItemDrawerProvider";
 import { formatFileSize } from "@/lib/utils";
 
-function fileIcon(fileName: string | null) {
+function renderFileIcon(fileName: string | null) {
   const ext = fileName?.split(".").pop()?.toLowerCase() ?? "";
-  if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext)) return FileImage;
-  if (["ts", "tsx", "js", "jsx", "py", "go", "rs", "json", "yaml", "yml"].includes(ext)) return FileCode;
-  if (["zip", "tar", "gz", "rar", "7z"].includes(ext)) return FileArchive;
-  if (["md", "txt", "pdf", "doc", "docx"].includes(ext)) return FileText;
-  return File;
+  const className = "size-5 shrink-0 text-muted-foreground";
+  if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext)) return <FileImage className={className} />;
+  if (["ts", "tsx", "js", "jsx", "py", "go", "rs", "json", "yaml", "yml"].includes(ext)) return <FileCode className={className} />;
+  if (["zip", "tar", "gz", "rar", "7z"].includes(ext)) return <FileArchive className={className} />;
+  if (["md", "txt", "pdf", "doc", "docx"].includes(ext)) return <FileText className={className} />;
+  return <File className={className} />;
 }
 
 
@@ -25,7 +26,6 @@ function formatDate(date: Date | string): string {
 
 export function FileListRow({ item }: { item: DashboardItem }) {
   const { openDrawer } = useItemDrawer();
-  const Icon = fileIcon(item.fileName);
 
   function handleDownload(e: React.MouseEvent) {
     e.stopPropagation();
@@ -42,7 +42,7 @@ export function FileListRow({ item }: { item: DashboardItem }) {
       onClick={() => openDrawer(item.id)}
     >
       {/* File icon */}
-      <Icon className="size-5 shrink-0 text-muted-foreground" />
+      {renderFileIcon(item.fileName)}
 
       {/* Name + meta */}
       <div className="min-w-0 flex-1">

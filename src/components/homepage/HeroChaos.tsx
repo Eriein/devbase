@@ -65,7 +65,11 @@ function stepIconState(
   mouse: { x: number; y: number },
   dt: number
 ): IconState {
-  let { x, y, vx, vy, rotation, rotSpeed, scale, scaleDir } = s;
+  const { rotation: rot0, rotSpeed, scale: scale0, scaleDir: scaleDir0 } = s;
+  let { x, y, vx, vy } = s;
+  let rotation = rot0;
+  let scale = scale0;
+  let scaleDir = scaleDir0;
 
   x += vx * dt;
   y += vy * dt;

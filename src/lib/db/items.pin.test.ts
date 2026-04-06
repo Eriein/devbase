@@ -16,7 +16,7 @@ describe("toggleItemPin", () => {
   });
 
   it("toggles isPinned from false to true", async () => {
-    vi.spyOn(prisma.item, "findFirst").mockResolvedValue({ isPinned: false } as any);
+    vi.spyOn(prisma.item, "findFirst").mockResolvedValue({ isPinned: false } as unknown as Awaited<ReturnType<typeof prisma.item.findFirst>>);
     vi.spyOn(prisma.item, "updateMany").mockResolvedValue({ count: 1 });
 
     const result = await toggleItemPin("user-1", "item-1");
@@ -29,7 +29,7 @@ describe("toggleItemPin", () => {
   });
 
   it("toggles isPinned from true to false", async () => {
-    vi.spyOn(prisma.item, "findFirst").mockResolvedValue({ isPinned: true } as any);
+    vi.spyOn(prisma.item, "findFirst").mockResolvedValue({ isPinned: true } as unknown as Awaited<ReturnType<typeof prisma.item.findFirst>>);
     vi.spyOn(prisma.item, "updateMany").mockResolvedValue({ count: 1 });
 
     const result = await toggleItemPin("user-1", "item-1");

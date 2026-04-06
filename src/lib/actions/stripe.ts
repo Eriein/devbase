@@ -22,12 +22,17 @@ export async function createCheckoutSession(
   if (!eligibility.ok) return { success: false, error: eligibility.error };
 
   try {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (!appUrl) {
+      return { success: false, error: "App URL not configured" };
+    }
+
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
       line_items: [{ price: STRIPE_PRICES[eligibility.plan], quantity: 1 }],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/settings?upgrade=success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/settings?upgrade=cancelled`,
+      success_url: `${appUrl}/settings?upgrade=success`,
+      cancel_url: `${appUrl}/settings?upgrade=cancelled`,
       customer: user.stripeCustomerId ?? undefined,
       metadata: { userId: session.user.id },
       subscription_data: { metadata: { userId: session.user.id } },
@@ -50,9 +55,14 @@ export async function createBillingPortalSession(): Promise<CheckoutResult> {
   if (!user?.stripeCustomerId) return { success: false, error: "No billing account" };
 
   try {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (!appUrl) {
+      return { success: false, error: "App URL not configured" };
+    }
+
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: user.stripeCustomerId,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/settings`,
+      return_url: `${appUrl}/settings`,
     });
     return { success: true, url: portalSession.url };
   } catch {

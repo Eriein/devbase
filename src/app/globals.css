@@ -164,6 +164,85 @@
 .auth-animate-delay-2 { animation-delay: 160ms; }
 .auth-animate-delay-3 { animation-delay: 240ms; }
 
+/* ─── Upgrade page ───────────────────────────────────────── */
+
+.upgrade-page {
+  --upgrade-blue: #3b82f6;
+  --upgrade-blue-light: #60a5fa;
+}
+
+.upgrade-bg {
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 0%, oklch(0.35 0.08 260 / 25%) 0%, transparent 60%),
+    radial-gradient(circle at 80% 20%, oklch(0.3 0.06 260 / 10%) 0%, transparent 40%);
+}
+
+.upgrade-animate {
+  animation: upgrade-fade-up 0.5s ease-out both;
+}
+
+@keyframes upgrade-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.upgrade-feature-row {
+  animation: upgrade-fade-in 0.35s ease-out both;
+}
+
+@keyframes upgrade-fade-in {
+  from { opacity: 0; transform: translateX(-6px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.upgrade-border-glow {
+  background: conic-gradient(
+    from var(--upgrade-border-angle, 0deg),
+    transparent 40%,
+    var(--upgrade-blue) 50%,
+    var(--upgrade-blue-light) 55%,
+    transparent 60%
+  );
+  animation: upgrade-border-spin 4s linear infinite;
+  opacity: 0.7;
+}
+
+@keyframes upgrade-border-spin {
+  to { --upgrade-border-angle: 360deg; }
+}
+
+@property --upgrade-border-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.upgrade-pro-card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 1rem;
+  background: linear-gradient(160deg, oklch(0.5 0.15 260 / 40%) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.upgrade-pro-card::after {
+  content: "";
+  position: absolute;
+  inset: 40% 10% -20% 10%;
+  background: radial-gradient(ellipse at center, oklch(0.45 0.15 260 / 15%) 0%, transparent 70%);
+  pointer-events: none;
+  filter: blur(40px);
+  z-index: 0;
+}
+
 /* ─── Thin dark scrollbar (shared by code/markdown editors) ── */
 
 .editor-scrollbar::-webkit-scrollbar {

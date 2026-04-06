@@ -35,8 +35,10 @@ export async function createCheckoutSession(
 
     if (!checkoutSession.url) return { success: false, error: "No checkout URL" };
     return { success: true, url: checkoutSession.url };
-  } catch {
-    return { success: false, error: "Failed to create checkout session" };
+  } catch (err) {
+    console.error("Stripe checkout error:", err);
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return { success: false, error: `Failed to create checkout session: ${message}` };
   }
 }
 

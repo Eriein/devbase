@@ -73,7 +73,7 @@ export function Sidebar({
                     onClick={(e) => {
                       if (type.isPro && !isPro) {
                         e.preventDefault();
-                        window.location.href = "/settings";
+                        window.location.href = "/upgrade";
                       }
                     }}
                     className={cn(

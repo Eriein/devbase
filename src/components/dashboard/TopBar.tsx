@@ -14,9 +14,10 @@ interface TopBarProps {
   onNewItem?: () => void;
   onNewCollection?: () => void;
   onOpenSearch?: () => void;
+  isPro: boolean;
 }
 
-export function TopBar({ onToggleSidebar, onNewItem, onNewCollection, onOpenSearch }: TopBarProps) {
+export function TopBar({ onToggleSidebar, onNewItem, onNewCollection, onOpenSearch, isPro }: TopBarProps) {
   return (
     <header className="flex h-14 items-center justify-between border-b border-border px-4 sm:px-6">
       {/* Left: sidebar toggle + title */}
@@ -91,6 +92,17 @@ export function TopBar({ onToggleSidebar, onNewItem, onNewCollection, onOpenSear
         </DropdownMenu>
 
         {/* Separate labeled buttons on sm+ */}
+        {!isPro && (
+          <Link
+            href="/upgrade"
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "sm" }),
+              "hidden text-muted-foreground hover:text-foreground sm:flex"
+            )}
+          >
+            Upgrade
+          </Link>
+        )}
         <Button variant="outline" size="sm" className="hidden gap-1.5 sm:flex" onClick={onNewItem}>
           <Plus className="size-3.5" />
           New Item

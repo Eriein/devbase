@@ -2,31 +2,13 @@
 
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  createCheckoutSession,
-} from "@/lib/actions/stripe";
-import { useState } from "react";
-import { toast } from "sonner";
-import type { StripePlan } from "@/lib/stripe";
+import Link from "next/link";
 
 interface UpgradeRequiredProps {
   feature: string;
 }
 
 export function UpgradeRequired({ feature }: UpgradeRequiredProps) {
-  const [loading, setLoading] = useState<StripePlan | null>(null);
-
-  async function handleUpgrade(plan: StripePlan) {
-    setLoading(plan);
-    const result = await createCheckoutSession(plan);
-    if (result.success) {
-      window.location.href = result.url;
-    } else {
-      toast.error(result.error);
-      setLoading(null);
-    }
-  }
-
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-24">
       <div className="rounded-full bg-muted p-4 mb-4">
@@ -39,21 +21,11 @@ export function UpgradeRequired({ feature }: UpgradeRequiredProps) {
         {feature} are available for Pro users. Upgrade now to unlock unlimited
         file uploads, image storage, and more.
       </p>
-      <div className="flex gap-3">
-        <Button
-          disabled={!!loading}
-          onClick={() => handleUpgrade("monthly")}
-        >
-          {loading === "monthly" ? "Loading..." : "$8 / month"}
+      <Link href="/upgrade">
+        <Button>
+          Upgrade Now
         </Button>
-        <Button
-          variant="outline"
-          disabled={!!loading}
-          onClick={() => handleUpgrade("yearly")}
-        >
-          {loading === "yearly" ? "Loading..." : "$72 / year"}
-        </Button>
-      </div>
+      </Link>
     </div>
   );
 }

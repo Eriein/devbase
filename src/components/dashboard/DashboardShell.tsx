@@ -109,6 +109,7 @@ export function DashboardShell({
           onNewItem={() => openCreateDialog()}
           onNewCollection={() => setNewCollectionOpen(true)}
           onOpenSearch={() => setPaletteOpen(true)}
+          isPro={isPro}
         />
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>

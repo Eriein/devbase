@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { showLanguage, showUrl } from "@/lib/item-type-helpers";
 import { ItemContentSection } from "./ItemContentSection";
 import { CollectionMultiSelect } from "@/components/items/CollectionMultiSelect";
+import { LanguageSelect } from "@/components/items/LanguageSelect";
 import type { EditState } from "./useItemDrawerActions";
 import type { ItemDetail } from "@/lib/db/items";
 
@@ -15,6 +16,7 @@ interface ItemDrawerEditFormProps {
     field: keyof EditState
   ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onContentChange: (val: string) => void;
+  onLanguageChange: (val: string) => void;
   onCollectionIdsChange: (ids: string[]) => void;
 }
 
@@ -23,6 +25,7 @@ export function ItemDrawerEditForm({
   editState,
   patch,
   onContentChange,
+  onLanguageChange,
   onCollectionIdsChange,
 }: ItemDrawerEditFormProps) {
   const typeName = item.itemType.name;
@@ -41,6 +44,19 @@ export function ItemDrawerEditForm({
           rows={3}
         />
       </div>
+
+      {/* Language (before content so highlighting is active) */}
+      {showLanguage(typeName) && (
+        <div>
+          <label className="mb-2 block text-sm font-medium text-foreground">
+            Language
+          </label>
+          <LanguageSelect
+            value={editState.language}
+            onChange={onLanguageChange}
+          />
+        </div>
+      )}
 
       {/* Content */}
       <ItemContentSection
@@ -61,20 +77,6 @@ export function ItemDrawerEditForm({
             onChange={patch("url")}
             placeholder="https://..."
             type="url"
-          />
-        </div>
-      )}
-
-      {/* Language */}
-      {showLanguage(typeName) && (
-        <div>
-          <label className="mb-2 block text-sm font-medium text-foreground">
-            Language
-          </label>
-          <Input
-            value={editState.language}
-            onChange={patch("language")}
-            placeholder="e.g. typescript"
           />
         </div>
       )}

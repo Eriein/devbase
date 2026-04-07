@@ -307,6 +307,9 @@ export function ItemDrawer({ itemId, open, onClose }: ItemDrawerProps) {
                     onContentChange={(val) =>
                       setEditState((prev) => prev && { ...prev, content: val })
                     }
+                    onLanguageChange={(val) =>
+                      setEditState((prev) => prev && { ...prev, language: val })
+                    }
                     onCollectionIdsChange={(ids) =>
                       setEditState((prev) => prev && { ...prev, collectionIds: ids })
                     }

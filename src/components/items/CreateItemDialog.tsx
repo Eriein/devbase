@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ContentFieldRenderer } from "@/components/items/ContentFieldRenderer";
 import { CollectionMultiSelect } from "@/components/items/CollectionMultiSelect";
+import { LanguageSelect } from "@/components/items/LanguageSelect";
 import { iconMap, showContent, showLanguage, showUrl, isImageType, needsFileUpload } from "@/lib/item-type-helpers";
 import { toast } from "sonner";
 import { createItem } from "@/lib/actions/items";
@@ -239,6 +240,19 @@ export function CreateItemDialog({
             </div>
           )}
 
+          {/* Language — snippet, command (before content so highlighting is active) */}
+          {selectedType && showLanguage(selectedType.name) && (
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-foreground">
+                Language
+              </label>
+              <LanguageSelect
+                value={form.language}
+                onChange={(val) => setForm((prev) => ({ ...prev, language: val }))}
+              />
+            </div>
+          )}
+
           {/* Content — snippet, prompt, command, note */}
           {selectedType && showContent(selectedType.name) && (
             <div>
@@ -266,20 +280,6 @@ export function CreateItemDialog({
                 onChange={patch("url")}
                 placeholder="https://..."
                 type="url"
-              />
-            </div>
-          )}
-
-          {/* Language — snippet, command */}
-          {selectedType && showLanguage(selectedType.name) && (
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-foreground">
-                Language
-              </label>
-              <Input
-                value={form.language}
-                onChange={patch("language")}
-                placeholder="e.g. typescript"
               />
             </div>
           )}

@@ -78,7 +78,7 @@ export function DashboardShell({
   return (
     <EditorPreferencesProvider initial={initialEditorPreferences ?? DEFAULT_EDITOR_PREFERENCES}>
     <CreateItemDialogContext.Provider value={{ openCreateDialog }}>
-    <ItemDrawerProvider>
+    <ItemDrawerProvider isPro={isPro}>
     <div className="flex h-screen">
       {/* Desktop sidebar */}
       {!isMobile && (
@@ -119,6 +119,7 @@ export function DashboardShell({
         onOpenChange={setNewItemOpen}
         itemTypes={sidebarItemTypes}
         initialTypeId={newItemTypeId}
+        isPro={isPro}
       />
       <CreateCollectionDialog
         open={newCollectionOpen}

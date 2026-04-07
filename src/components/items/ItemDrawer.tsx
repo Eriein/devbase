@@ -74,9 +74,10 @@ interface ItemDrawerProps {
   itemId: string | null;
   open: boolean;
   onClose: () => void;
+  isPro: boolean;
 }
 
-export function ItemDrawer({ itemId, open, onClose }: ItemDrawerProps) {
+export function ItemDrawer({ itemId, open, onClose, isPro }: ItemDrawerProps) {
   const [item, setItem] = useState<ItemDetail | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -370,6 +371,18 @@ export function ItemDrawer({ itemId, open, onClose }: ItemDrawerProps) {
                       e: React.ChangeEvent<HTMLInputElement>
                     ) => void
                   }
+                  isPro={isPro}
+                  onAcceptTag={(tag) => {
+                    if (!editState) return;
+                    const current = editState.tagsRaw
+                      .split(",")
+                      .map((t) => t.trim())
+                      .filter(Boolean);
+                    if (!current.some((t) => t.toLowerCase() === tag.toLowerCase())) {
+                      const updated = [...current, tag].join(", ");
+                      setEditState((prev) => prev && { ...prev, tagsRaw: updated });
+                    }
+                  }}
                 />
 
                 {/* Collections + Details — view mode only */}

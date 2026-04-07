@@ -21,6 +21,7 @@ import { createItem } from "@/lib/actions/items";
 import type { SidebarItemType } from "@/lib/db/item-types";
 import { FileUpload } from "@/components/items/FileUpload";
 import type { UploadedFile } from "@/components/items/FileUpload";
+import { SuggestTagsButton } from "@/components/items/SuggestTagsButton";
 
 // ─── Constants ────────────────────────────────────────────────
 
@@ -55,6 +56,7 @@ interface CreateItemDialogProps {
   onOpenChange: (open: boolean) => void;
   itemTypes: SidebarItemType[];
   initialTypeId?: string;
+  isPro: boolean;
 }
 
 export function CreateItemDialog({
@@ -62,6 +64,7 @@ export function CreateItemDialog({
   onOpenChange,
   itemTypes,
   initialTypeId,
+  isPro,
 }: CreateItemDialogProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -294,9 +297,25 @@ export function CreateItemDialog({
               onChange={patch("tagsRaw")}
               placeholder="react, hooks, typescript"
             />
-            <p className="mt-1 text-xs text-muted-foreground">
-              Comma-separated
-            </p>
+            <div className="mt-1 flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                Comma-separated
+              </p>
+              <SuggestTagsButton
+                title={form.title}
+                content={form.content || null}
+                description={form.description || null}
+                isPro={isPro}
+                existingTags={form.tagsRaw.split(",").map((t) => t.trim()).filter(Boolean)}
+                onAcceptTag={(tag) => {
+                  const current = form.tagsRaw.split(",").map((t) => t.trim()).filter(Boolean);
+                  if (!current.some((t) => t.toLowerCase() === tag.toLowerCase())) {
+                    const updated = [...current, tag].join(", ");
+                    setForm((prev) => ({ ...prev, tagsRaw: updated }));
+                  }
+                }}
+              />
+            </div>
           </div>
 
           {/* Collections */}

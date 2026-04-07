@@ -65,6 +65,14 @@ export const ratelimit = {
         prefix: "ratelimit:upload",
       })
     : disabledRatelimit,
+  ai: isRedisConfigured()
+    ? new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(20, "1 h"),
+        analytics: true,
+        prefix: "ratelimit:ai",
+      })
+    : disabledRatelimit,
 };
 
 export function extractIP(request: Request): string {

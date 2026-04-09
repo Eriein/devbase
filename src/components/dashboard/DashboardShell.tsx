@@ -85,7 +85,7 @@ export function DashboardShell({
         <aside
           className={cn(
             "flex flex-col border-r border-border bg-sidebar transition-[width] duration-200",
-            collapsed ? "w-14" : "w-60"
+            collapsed ? "w-[68px]" : "w-[272px]"
           )}
         >
           <Sidebar collapsed={collapsed} {...sidebarData} isPro={isPro} />
@@ -95,7 +95,7 @@ export function DashboardShell({
       {/* Mobile drawer */}
       {isMobile && (
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent side="left" className="w-60 p-0 bg-sidebar">
+          <SheetContent side="left" className="w-[272px] p-0 bg-sidebar">
             <SheetTitle className="sr-only">Navigation</SheetTitle>
             <Sidebar collapsed={false} {...sidebarData} isPro={isPro} />
           </SheetContent>

@@ -2,15 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Code2 } from "lucide-react";
-import { iconMap } from "@/lib/item-type-helpers";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ClientOnly } from "@/components/ClientOnly";
 import { cn } from "@/lib/utils";
+import { iconMap } from "@/lib/item-type-helpers";
+import { isItemTypeActive } from "@/lib/sidebar-helpers";
 import type { SidebarItemType } from "@/lib/db/item-types";
 import type { CollectionWithTypes } from "@/lib/db/collections";
 import { SidebarCollections } from "./SidebarCollections";
+import { SidebarSectionHeader } from "./SidebarSectionHeader";
+import { SidebarItemRow } from "./SidebarItemRow";
 import { UserMenuDropdown } from "./UserMenuDropdown";
 
 // ─── Types ────────────────────────────────────────────────────
@@ -27,6 +28,29 @@ interface SidebarProps extends SidebarData {
   isPro: boolean;
 }
 
+// ─── Brand mark ───────────────────────────────────────────────
+
+function BrandMark({ size }: { size: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      fill="none"
+      aria-hidden="true"
+      className="shrink-0"
+    >
+      <rect width="32" height="32" rx="8" fill="#3b82f6" />
+      <path
+        d="M8 12h16M8 16h12M8 20h8"
+        stroke="white"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────
 
 export function Sidebar({
@@ -38,27 +62,23 @@ export function Sidebar({
   isPro,
 }: SidebarProps) {
   const pathname = usePathname();
-
-  const isItemTypeActive = (typeName: string) => {
-    const basePath = `/items/${typeName.toLowerCase()}s`;
-    return pathname.startsWith(basePath);
-  };
+  const isDashboardActive = pathname === "/dashboard";
 
   return (
     <div className="flex h-full flex-col">
-      {/* Logo */}
+      {/* Logo bar */}
       <Link
         href="/dashboard"
+        aria-current={isDashboardActive ? "page" : undefined}
         className={cn(
-          "flex h-14 items-center gap-2 border-b border-border px-4 transition-colors hover:bg-muted/50",
-          pathname === "/dashboard" && "bg-sidebar-accent"
+          "flex h-16 items-center gap-3 border-b border-border transition-colors hover:bg-muted/30",
+          collapsed ? "justify-center px-0" : "px-4",
+          isDashboardActive && "bg-sidebar-accent/50",
         )}
       >
-        <div className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-          <Code2 className="size-4" />
-        </div>
+        <BrandMark size={collapsed ? 28 : 26} />
         {!collapsed && (
-          <span className="text-sm font-semibold text-sidebar-foreground">
+          <span className="font-mono text-[13px] font-medium tracking-[0.02em] text-sidebar-foreground">
             DevStash
           </span>
         )}
@@ -67,75 +87,36 @@ export function Sidebar({
       {/* Scrollable content */}
       <ClientOnly fallback={<div className="flex-1" />}>
         <ScrollArea className="flex-1">
-          <div className={cn("py-3", collapsed ? "px-2" : "px-3")}>
-            {/* Item Types */}
-            <div className="mt-6">
-              {!collapsed && (
-                <h3 className="mb-2 px-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Item Types
-                </h3>
-              )}
-              <div className="space-y-0.5">
-                {sidebarItemTypes.map((type) => {
-                  const Icon = iconMap[type.icon];
-                  const href = type.isPro && !isPro ? "#" : `/items/${type.name.toLowerCase()}s`;
-                  const isActive = isItemTypeActive(type.name);
+          <div className={cn(collapsed ? "px-2 pb-3" : "px-3 pb-3")}>
+            {/* Library section */}
+            <SidebarSectionHeader label="Library" collapsed={collapsed} />
+            <div className={cn("space-y-0.5", collapsed && "flex flex-col items-center")}>
+              {sidebarItemTypes.map((type) => {
+                const Icon = iconMap[type.icon];
+                if (!Icon) return null;
+                const locked = type.isPro && !isPro;
+                const href = locked
+                  ? "#"
+                  : `/items/${type.name.toLowerCase()}s`;
 
-                  return (
-                    <Link
-                      key={type.id}
-                      href={href}
-                      onClick={(e) => {
-                        if (type.isPro && !isPro) {
-                          e.preventDefault();
-                          window.location.href = "/upgrade";
-                        }
-                      }}
-                      className={cn(
-                        "flex items-center gap-3 rounded-md px-2.5 py-1.5 text-sm hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors",
-                        isActive
-                          ? "bg-sidebar-accent text-sidebar-foreground font-medium"
-                          : "text-sidebar-foreground/80",
-                        collapsed && "justify-center px-2",
-                        type.isPro && !isPro && "cursor-not-allowed opacity-50"
-                      )}
-                    >
-                      {Icon && (
-                        <Icon
-                          className="size-4 shrink-0"
-                          style={{ color: type.color }}
-                        />
-                      )}
-                      {!collapsed && (
-                        <>
-                          <span className="flex-1 capitalize">{type.name}s</span>
-                          <span className="flex items-center gap-1.5">
-                            {type.isPro && !isPro && (
-                              <Badge
-                                variant="outline"
-                                className="h-auto px-1.5 py-0.5 text-[10px] font-semibold"
-                                style={{
-                                  backgroundColor: type.color + "20",
-                                  color: type.color,
-                                  borderColor: type.color + "40",
-                                }}
-                              >
-                                PRO
-                              </Badge>
-                            )}
-                            <span className="text-xs text-muted-foreground">
-                              {type.itemCount}
-                            </span>
-                          </span>
-                        </>
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
+                return (
+                  <SidebarItemRow
+                    key={type.id}
+                    href={href}
+                    icon={Icon}
+                    label={`${type.name}s`}
+                    color={type.color}
+                    count={type.itemCount}
+                    isPro={type.isPro}
+                    isLocked={locked}
+                    isActive={isItemTypeActive(pathname, type.name)}
+                    collapsed={collapsed}
+                  />
+                );
+              })}
             </div>
 
-            {/* Collections */}
+            {/* Collections section */}
             <SidebarCollections
               collections={sidebarCollections}
               collapsed={collapsed}

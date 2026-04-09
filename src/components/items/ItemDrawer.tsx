@@ -314,6 +314,10 @@ export function ItemDrawer({ itemId, open, onClose, isPro }: ItemDrawerProps) {
                     onCollectionIdsChange={(ids) =>
                       setEditState((prev) => prev && { ...prev, collectionIds: ids })
                     }
+                    onDescriptionChange={(val) =>
+                      setEditState((prev) => prev && { ...prev, description: val })
+                    }
+                    isPro={isPro}
                   />
                 ) : (
                   <>

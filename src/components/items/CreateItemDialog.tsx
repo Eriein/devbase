@@ -22,6 +22,7 @@ import type { SidebarItemType } from "@/lib/db/item-types";
 import { FileUpload } from "@/components/items/FileUpload";
 import type { UploadedFile } from "@/components/items/FileUpload";
 import { SuggestTagsButton } from "@/components/items/SuggestTagsButton";
+import { SuggestDescriptionButton } from "@/components/items/SuggestDescriptionButton";
 
 // ─── Constants ────────────────────────────────────────────────
 
@@ -215,9 +216,25 @@ export function CreateItemDialog({
 
           {/* Description */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-foreground">
-              Description
-            </label>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="block text-xs font-medium text-foreground">
+                Description
+              </label>
+              {selectedType && (
+                <SuggestDescriptionButton
+                  title={form.title}
+                  content={form.content || null}
+                  url={form.url || null}
+                  language={form.language || null}
+                  fileName={uploadedFile?.fileName ?? null}
+                  itemTypeName={selectedType.name}
+                  isPro={isPro}
+                  onGenerated={(text) =>
+                    setForm((prev) => ({ ...prev, description: text }))
+                  }
+                />
+              )}
+            </div>
             <Textarea
               value={form.description}
               onChange={patch("description")}

@@ -6,6 +6,7 @@ import { showLanguage, showUrl } from "@/lib/item-type-helpers";
 import { ItemContentSection } from "./ItemContentSection";
 import { CollectionMultiSelect } from "@/components/items/CollectionMultiSelect";
 import { LanguageSelect } from "@/components/items/LanguageSelect";
+import { SuggestDescriptionButton } from "@/components/items/SuggestDescriptionButton";
 import type { EditState } from "./useItemDrawerActions";
 import type { ItemDetail } from "@/lib/db/items";
 
@@ -18,6 +19,8 @@ interface ItemDrawerEditFormProps {
   onContentChange: (val: string) => void;
   onLanguageChange: (val: string) => void;
   onCollectionIdsChange: (ids: string[]) => void;
+  onDescriptionChange: (val: string) => void;
+  isPro: boolean;
 }
 
 export function ItemDrawerEditForm({
@@ -27,6 +30,8 @@ export function ItemDrawerEditForm({
   onContentChange,
   onLanguageChange,
   onCollectionIdsChange,
+  onDescriptionChange,
+  isPro,
 }: ItemDrawerEditFormProps) {
   const typeName = item.itemType.name;
 
@@ -34,9 +39,21 @@ export function ItemDrawerEditForm({
     <>
       {/* Description */}
       <div>
-        <label className="mb-2 block text-sm font-medium text-foreground">
-          Description
-        </label>
+        <div className="mb-2 flex items-center justify-between">
+          <label className="block text-sm font-medium text-foreground">
+            Description
+          </label>
+          <SuggestDescriptionButton
+            title={editState.title}
+            content={editState.content || null}
+            url={editState.url || null}
+            language={editState.language || null}
+            fileName={item.fileName ?? null}
+            itemTypeName={typeName}
+            isPro={isPro}
+            onGenerated={onDescriptionChange}
+          />
+        </div>
         <Textarea
           value={editState.description}
           onChange={patch("description")}

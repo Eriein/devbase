@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { OAuthProviders } from "./OAuthProviders";
 import { register, type AuthState } from "@/lib/actions/auth";
 
 export function RegisterForm() {
@@ -21,6 +22,8 @@ export function RegisterForm() {
           Start organizing your dev knowledge
         </p>
       </div>
+
+      <OAuthProviders />
 
       <form action={formAction} className="space-y-4">
         {state.error && (

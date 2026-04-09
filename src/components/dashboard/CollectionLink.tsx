@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 // ─── Shared collection link shape used across Favorites, Recent, and list ────
@@ -26,11 +27,17 @@ export function CollectionLink({
   trailing,
   className,
 }: CollectionLinkProps) {
+  const pathname = usePathname();
+  const isActive = pathname === href;
+
   return (
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-3 rounded-md px-2.5 py-1.5 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors",
+        "flex items-center gap-3 rounded-md px-2.5 py-1.5 text-sm hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors",
+        isActive
+          ? "bg-sidebar-accent text-sidebar-foreground font-medium"
+          : "text-sidebar-foreground/80",
         collapsed && "justify-center px-2",
         className
       )}

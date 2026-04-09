@@ -1,3 +1,4 @@
+import { usePathname } from "next/navigation";
 import { Search, Plus, FolderPlus, PanelLeft, Star } from "lucide-react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -17,7 +18,40 @@ interface TopBarProps {
   isPro: boolean;
 }
 
+function getTitleFromPathname(pathname: string): { title: string; subtitle?: string } {
+  if (pathname === "/dashboard" || pathname === "/") {
+    return { title: "Dashboard", subtitle: "Your developer knowledge hub" };
+  }
+  if (pathname.startsWith("/items/")) {
+    const type = pathname.split("/")[2];
+    if (type) {
+      return { title: type.charAt(0).toUpperCase() + type.slice(1) };
+    }
+  }
+  if (pathname === "/collections") {
+    return { title: "Collections" };
+  }
+  if (pathname.startsWith("/collections/")) {
+    return { title: "Collection" };
+  }
+  if (pathname === "/favorites") {
+    return { title: "Favorites" };
+  }
+  if (pathname === "/settings") {
+    return { title: "Settings" };
+  }
+  if (pathname === "/profile") {
+    return { title: "Profile" };
+  }
+  if (pathname === "/upgrade") {
+    return { title: "Upgrade" };
+  }
+  return { title: "Dashboard" };
+}
+
 export function TopBar({ onToggleSidebar, onNewItem, onNewCollection, onOpenSearch, isPro }: TopBarProps) {
+  const pathname = usePathname();
+  const { title, subtitle } = getTitleFromPathname(pathname);
   return (
     <header className="flex h-14 items-center justify-between border-b border-border px-4 sm:px-6">
       {/* Left: sidebar toggle + title */}
@@ -26,10 +60,12 @@ export function TopBar({ onToggleSidebar, onNewItem, onNewCollection, onOpenSear
           <PanelLeft className="size-4" />
         </Button>
         <div>
-          <h1 className="text-base font-semibold leading-tight">Dashboard</h1>
-          <p className="hidden text-xs text-muted-foreground sm:block">
-            Your developer knowledge hub
-          </p>
+          <h1 className="text-base font-semibold leading-tight">{title}</h1>
+          {subtitle && (
+            <p className="hidden text-xs text-muted-foreground sm:block">
+              {subtitle}
+            </p>
+          )}
         </div>
       </div>
 

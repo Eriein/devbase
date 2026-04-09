@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
+import { Menu } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import type { Session } from "next-auth";
 
 function LogoIcon() {
   return (
@@ -13,8 +16,40 @@ function LogoIcon() {
   );
 }
 
-export function Navbar() {
+interface NavbarProps {
+  session: Session | null;
+}
+
+function MobileNav({ session }: { session: Session | null }) {
+  return (
+    <div className="flex flex-col gap-4 py-4">
+      <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors py-2">
+        Features
+      </a>
+      <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors py-2">
+        Pricing
+      </a>
+      {session ? (
+        <Link href="/dashboard" className={buttonVariants()}>
+          Go to dashboard
+        </Link>
+      ) : (
+        <>
+          <Link href="/sign-in" className={buttonVariants({ variant: "ghost" })}>
+            Sign In
+          </Link>
+          <Link href="/register" className={buttonVariants()}>
+            Get Started
+          </Link>
+        </>
+      )}
+    </div>
+  );
+}
+
+export function Navbar({ session }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -36,6 +71,7 @@ export function Navbar() {
           <span>DevStash</span>
         </Link>
 
+        {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-8">
           <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Features
@@ -45,14 +81,35 @@ export function Navbar() {
           </a>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Link href="/sign-in" className={buttonVariants({ variant: "ghost" })}>
-            Sign In
-          </Link>
-          <Link href="/register" className={buttonVariants()}>
-            Get Started
-          </Link>
+        {/* Desktop auth buttons */}
+        <div className="hidden md:flex items-center gap-2">
+          {session ? (
+            <Link href="/dashboard" className={buttonVariants({ variant: "ghost" })}>
+              Go to dashboard
+            </Link>
+          ) : (
+            <>
+              <Link href="/sign-in" className={buttonVariants({ variant: "ghost" })}>
+                Sign In
+              </Link>
+              <Link href="/register" className={buttonVariants()}>
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
+
+        {/* Mobile hamburger */}
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetTrigger className="md:hidden">
+            <Button variant="ghost" size="icon" aria-label="Menu">
+              <Menu className="size-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-64">
+            <MobileNav session={session} />
+          </SheetContent>
+        </Sheet>
       </div>
     </nav>
   );

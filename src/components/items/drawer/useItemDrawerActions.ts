@@ -139,6 +139,30 @@ export function useItemDrawerActions(
     setEditState(null);
   };
 
+  const handleAcceptOptimized = (optimizedContent: string) => {
+    if (!item) return;
+    startTransition(async () => {
+      const result = await updateItem(item.id, {
+        title: item.title,
+        description: item.description,
+        content: optimizedContent,
+        url: item.url,
+        language: item.language,
+        tags: item.tags.map((t) => t.name),
+        collectionIds: item.collections.map((c) => c.id),
+      });
+
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+
+      setItem(result.data);
+      toast.success("Prompt updated");
+      router.refresh();
+    });
+  };
+
   return {
     copied,
     isEditing,
@@ -152,6 +176,7 @@ export function useItemDrawerActions(
     handleEditCancel,
     handleDelete,
     handleSave,
+    handleAcceptOptimized,
     patch,
     resetEditState,
   };

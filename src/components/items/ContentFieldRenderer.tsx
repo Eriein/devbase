@@ -41,7 +41,7 @@ interface ContentFieldRendererProps {
   onChange?: (val: string) => void;
   /** Only used in edit mode for plain-text types */
   rows?: number;
-  /** Pro subscription status — only used when showExplainButton is true */
+  /** Pro subscription status — only used when showExplainButton/showOptimizeButton is true */
   isPro?: boolean;
   /**
    * When true (drawer read view only), the CodeEditor renders an Explain
@@ -49,8 +49,21 @@ interface ContentFieldRendererProps {
    * create + edit forms.
    */
   showExplainButton?: boolean;
-  /** Item title, passed to CodeEditor for the explain prompt */
+  /**
+   * When true (drawer read view only), the MarkdownEditor renders an Optimize
+   * button that calls the optimizePrompt server action. Omitted / false in
+   * create + edit forms.
+   */
+  showOptimizeButton?: boolean;
+  /** Item title, passed to CodeEditor/MarkdownEditor for the explain/optimize prompt */
   title?: string;
+  /** Item ID — required when showOptimizeButton is true */
+  itemId?: string;
+  /**
+   * Callback when user accepts the optimized prompt. Called with the
+   * optimized content that should be persisted.
+   */
+  onAcceptOptimized?: (optimizedContent: string) => void;
 }
 
 /**
@@ -65,7 +78,10 @@ export function ContentFieldRenderer({
   rows = 8,
   isPro,
   showExplainButton,
+  showOptimizeButton,
   title,
+  itemId,
+  onAcceptOptimized,
 }: ContentFieldRendererProps) {
   const isEditMode = onChange !== undefined;
 
@@ -88,6 +104,12 @@ export function ContentFieldRenderer({
       <MarkdownEditor
         value={value}
         onChange={isEditMode ? onChange : undefined}
+        showOptimizeButton={showOptimizeButton && !isEditMode}
+        isPro={isPro}
+        title={title}
+        itemTypeName={typeName}
+        itemId={itemId}
+        onAcceptOptimized={onAcceptOptimized}
       />
     );
   }

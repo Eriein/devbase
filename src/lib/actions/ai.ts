@@ -22,6 +22,12 @@ import {
   parseExplanationResponse,
 } from "@/lib/ai-explain-validation";
 import type { ExplainCodeInput } from "@/lib/ai-explain-validation";
+import {
+  validateOptimizePromptInput,
+  buildOptimizePromptText,
+  parseOptimizeResponse,
+} from "@/lib/ai-optimize-validation";
+import type { OptimizePromptInput } from "@/lib/ai-optimize-validation";
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -220,6 +226,72 @@ export async function explainCode(
     return {
       success: false,
       error: "Failed to generate explanation. Please try again.",
+    };
+  }
+}
+
+// ─── optimizePrompt ───────────────────────────────────────────
+
+export type OptimizePromptResult =
+  | { success: true; optimizedPrompt: string }
+  | { success: false; error: string; minutesUntilReset?: number };
+
+export async function optimizePrompt(
+  input: OptimizePromptInput
+): Promise<OptimizePromptResult> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  if (!canUseAI(session.user.isPro)) {
+    return { success: false, error: "AI features require a Pro subscription" };
+  }
+
+  const validation = validateOptimizePromptInput(input);
+  if (!validation.ok) {
+    return { success: false, error: validation.error };
+  }
+
+  try {
+    const result = await withRateLimit(
+      ratelimit.ai,
+      session.user.id,
+      async () => {
+        const promptText = buildOptimizePromptText(validation.data);
+
+        const response = await openai.responses.create({
+          model: AI_MODEL,
+          instructions:
+            "You are a prompt refinement assistant. Improve the user's prompt by adding specific details, context, and structure where needed. Make it more clear and actionable. If the prompt is already good, return it unchanged. Return ONLY the optimized prompt text, no commentary, no labels like 'Optimized:', no code blocks.",
+          input: `Improve this prompt:\n\n${promptText}`,
+        });
+
+        const optimizedPrompt = parseOptimizeResponse(response.output_text);
+        if (optimizedPrompt.length === 0) {
+          return {
+            success: false as const,
+            error: "AI returned an empty response. Try again.",
+          };
+        }
+
+        return { success: true as const, optimizedPrompt };
+      }
+    );
+
+    if ("minutesUntilReset" in result) {
+      return {
+        success: false,
+        error: result.error,
+        minutesUntilReset: result.minutesUntilReset,
+      };
+    }
+
+    return result;
+  } catch {
+    return {
+      success: false,
+      error: "Failed to optimize prompt. Please try again.",
     };
   }
 }

@@ -94,6 +94,7 @@ export function ItemDrawer({ itemId, open, onClose, isPro }: ItemDrawerProps) {
     handleEditCancel,
     handleDelete,
     handleSave,
+    handleAcceptOptimized,
     patch,
     resetEditState,
   } = useItemDrawerActions(item, setItem, onClose);
@@ -340,6 +341,7 @@ export function ItemDrawer({ itemId, open, onClose, isPro }: ItemDrawerProps) {
                       editState={null}
                       onContentChange={() => {}}
                       isPro={isPro}
+                      onAcceptOptimized={handleAcceptOptimized}
                     />
 
                     {/* URL — view mode */}

@@ -11,6 +11,7 @@ interface ItemContentSectionProps {
   editState: EditState | null;
   onContentChange: (val: string) => void;
   isPro?: boolean;
+  onAcceptOptimized?: (optimizedContent: string) => void;
 }
 
 export function ItemContentSection({
@@ -19,6 +20,7 @@ export function ItemContentSection({
   editState,
   onContentChange,
   isPro,
+  onAcceptOptimized,
 }: ItemContentSectionProps) {
   const typeName = item.itemType.name;
 
@@ -50,8 +52,11 @@ export function ItemContentSection({
           value={item.content}
           language={item.language ?? undefined}
           showExplainButton
+          showOptimizeButton
           isPro={isPro}
           title={item.title}
+          itemId={item.id}
+          onAcceptOptimized={onAcceptOptimized}
         />
       </div>
     );

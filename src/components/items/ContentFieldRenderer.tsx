@@ -41,6 +41,16 @@ interface ContentFieldRendererProps {
   onChange?: (val: string) => void;
   /** Only used in edit mode for plain-text types */
   rows?: number;
+  /** Pro subscription status — only used when showExplainButton is true */
+  isPro?: boolean;
+  /**
+   * When true (drawer read view only), the CodeEditor renders an Explain
+   * button that calls the explainCode server action. Omitted / false in
+   * create + edit forms.
+   */
+  showExplainButton?: boolean;
+  /** Item title, passed to CodeEditor for the explain prompt */
+  title?: string;
 }
 
 /**
@@ -53,6 +63,9 @@ export function ContentFieldRenderer({
   language,
   onChange,
   rows = 8,
+  isPro,
+  showExplainButton,
+  title,
 }: ContentFieldRendererProps) {
   const isEditMode = onChange !== undefined;
 
@@ -62,6 +75,10 @@ export function ContentFieldRenderer({
         value={value}
         language={language}
         onChange={isEditMode ? onChange : undefined}
+        showExplainButton={showExplainButton && !isEditMode}
+        isPro={isPro}
+        title={title}
+        itemTypeName={typeName}
       />
     );
   }

@@ -16,6 +16,12 @@ import {
   parseDescriptionResponse,
 } from "@/lib/ai-description-validation";
 import type { AutoDescriptionInput } from "@/lib/ai-description-validation";
+import {
+  validateExplainCodeInput,
+  buildExplainPromptText,
+  parseExplanationResponse,
+} from "@/lib/ai-explain-validation";
+import type { ExplainCodeInput } from "@/lib/ai-explain-validation";
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -148,6 +154,72 @@ export async function generateAutoDescription(
     return {
       success: false,
       error: "Failed to generate description. Please try again.",
+    };
+  }
+}
+
+// ─── explainCode ─────────────────────────────────────────────
+
+export type ExplainCodeResult =
+  | { success: true; explanation: string }
+  | { success: false; error: string; minutesUntilReset?: number };
+
+export async function explainCode(
+  input: ExplainCodeInput
+): Promise<ExplainCodeResult> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  if (!canUseAI(session.user.isPro)) {
+    return { success: false, error: "AI features require a Pro subscription" };
+  }
+
+  const validation = validateExplainCodeInput(input);
+  if (!validation.ok) {
+    return { success: false, error: validation.error };
+  }
+
+  try {
+    const result = await withRateLimit(
+      ratelimit.ai,
+      session.user.id,
+      async () => {
+        const promptText = buildExplainPromptText(validation.data);
+
+        const response = await openai.responses.create({
+          model: AI_MODEL,
+          instructions:
+            "You are a developer tool assistant. Given a code snippet or terminal command, write a concise 200-300 word explanation in markdown. Cover what the code does and the key concepts, functions, or flags involved. Use short paragraphs and inline code formatting where appropriate. Do not wrap your response in a fenced code block and do not start with \"Explanation:\". Return only the markdown explanation.",
+          input: `Explain this ${validation.data.itemTypeName.toLowerCase()} in 200-300 words of markdown.\n\n${promptText}`,
+        });
+
+        const explanation = parseExplanationResponse(response.output_text);
+        if (explanation.length === 0) {
+          return {
+            success: false as const,
+            error: "AI returned no explanation. Try again.",
+          };
+        }
+
+        return { success: true as const, explanation };
+      }
+    );
+
+    if ("minutesUntilReset" in result) {
+      return {
+        success: false,
+        error: result.error,
+        minutesUntilReset: result.minutesUntilReset,
+      };
+    }
+
+    return result;
+  } catch {
+    return {
+      success: false,
+      error: "Failed to generate explanation. Please try again.",
     };
   }
 }

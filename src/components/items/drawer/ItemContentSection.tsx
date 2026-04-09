@@ -10,6 +10,7 @@ interface ItemContentSectionProps {
   isEditing: boolean;
   editState: EditState | null;
   onContentChange: (val: string) => void;
+  isPro?: boolean;
 }
 
 export function ItemContentSection({
@@ -17,6 +18,7 @@ export function ItemContentSection({
   isEditing,
   editState,
   onContentChange,
+  isPro,
 }: ItemContentSectionProps) {
   const typeName = item.itemType.name;
 
@@ -47,6 +49,9 @@ export function ItemContentSection({
           typeName={typeName}
           value={item.content}
           language={item.language ?? undefined}
+          showExplainButton
+          isPro={isPro}
+          title={item.title}
         />
       </div>
     );

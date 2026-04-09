@@ -339,6 +339,7 @@ export function ItemDrawer({ itemId, open, onClose, isPro }: ItemDrawerProps) {
                       isEditing={false}
                       editState={null}
                       onContentChange={() => {}}
+                      isPro={isPro}
                     />
 
                     {/* URL — view mode */}

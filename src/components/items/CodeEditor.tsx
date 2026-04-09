@@ -1,10 +1,14 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
-import { Copy, Check } from "lucide-react";
+import { useState, useTransition } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { Copy, Check, Sparkles, Loader2, Crown } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useEditorPreferences } from "@/components/editor/EditorPreferencesContext";
+import { explainCode } from "@/lib/actions/ai";
 import type { Monaco } from "@monaco-editor/react";
 
 // Monaco cannot run server-side — load it only in the browser
@@ -20,6 +24,19 @@ interface CodeEditorProps {
   language?: string;
   /** When provided the editor is editable; omit for readonly display */
   onChange?: (value: string) => void;
+  /**
+   * When true (drawer read view only), renders the AI Explain button and
+   * Code/Explain tab toggle once an explanation has been generated.
+   * Must be combined with itemTypeName so the server action knows what
+   * kind of item it's explaining.
+   */
+  showExplainButton?: boolean;
+  /** Pro subscription status — gates the Explain button */
+  isPro?: boolean;
+  /** Item title, forwarded to the explainCode server action */
+  title?: string;
+  /** Item type name (snippet or command) — required when showExplainButton is true */
+  itemTypeName?: string;
 }
 
 // ─── Custom themes ────────────────────────────────────────────
@@ -88,18 +105,82 @@ function WindowDots() {
   );
 }
 
+// ─── Tab button ───────────────────────────────────────────────
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+        active
+          ? "bg-[#1e1e1e] text-foreground"
+          : "text-muted-foreground hover:text-foreground"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────
 
-export function CodeEditor({ value, language, onChange }: CodeEditorProps) {
+type ViewMode = "code" | "explain";
+
+export function CodeEditor({
+  value,
+  language,
+  onChange,
+  showExplainButton = false,
+  isPro = false,
+  title,
+  itemTypeName,
+}: CodeEditorProps) {
   const [copied, setCopied] = useState(false);
+  const [explanation, setExplanation] = useState<string | null>(null);
+  const [mode, setMode] = useState<ViewMode>("code");
+  const [isExplaining, startExplainTransition] = useTransition();
   const { preferences } = useEditorPreferences();
   const isReadonly = onChange === undefined;
   const displayLang = language ?? "plaintext";
+  const canShowExplain = showExplainButton && !!itemTypeName;
+  const hasExplanation = explanation !== null;
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(value);
+    // In explain mode, copy the explanation text; otherwise copy the code.
+    const textToCopy = mode === "explain" && explanation ? explanation : value;
+    navigator.clipboard.writeText(textToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleExplain = () => {
+    if (!canShowExplain || !itemTypeName) return;
+    startExplainTransition(async () => {
+      const result = await explainCode({
+        title: title ?? null,
+        content: value,
+        language: language ?? null,
+        itemTypeName,
+      });
+
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+
+      setExplanation(result.explanation);
+      setMode("explain");
+      toast.success("Explanation generated");
+    });
   };
 
   // Calculate editor height: 1 line ≈ 19px + padding, clamp 80–400px
@@ -112,55 +193,107 @@ export function CodeEditor({ value, language, onChange }: CodeEditorProps) {
       <div className="flex items-center justify-between border-b border-border/60 bg-[#252526] px-3 py-2">
         <div className="flex items-center gap-3">
           <WindowDots />
-          <span className="font-mono text-xs text-muted-foreground/70">
-            {displayLang}
-          </span>
-        </div>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          title={copied ? "Copied!" : "Copy"}
-          onClick={handleCopy}
-          className="h-6 w-6 text-muted-foreground hover:text-foreground"
-        >
-          {copied ? (
-            <Check className="size-3.5 text-green-400" />
+          {hasExplanation ? (
+            <div className="flex items-center gap-0.5">
+              <TabButton active={mode === "code"} onClick={() => setMode("code")}>
+                Code
+              </TabButton>
+              <TabButton
+                active={mode === "explain"}
+                onClick={() => setMode("explain")}
+              >
+                Explain
+              </TabButton>
+            </div>
           ) : (
-            <Copy className="size-3.5" />
+            <span className="font-mono text-xs text-muted-foreground/70">
+              {displayLang}
+            </span>
           )}
-        </Button>
+        </div>
+        <div className="flex items-center gap-0.5">
+          {canShowExplain &&
+            (isPro ? (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                title={hasExplanation ? "Regenerate explanation" : "Explain with AI"}
+                onClick={handleExplain}
+                disabled={isExplaining}
+                className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              >
+                {isExplaining ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="size-3.5" />
+                )}
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                title="AI features require Pro subscription"
+                disabled
+                className="h-6 w-6 text-muted-foreground/60"
+              >
+                <Crown className="size-3.5" />
+              </Button>
+            ))}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            title={copied ? "Copied!" : "Copy"}
+            onClick={handleCopy}
+            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+          >
+            {copied ? (
+              <Check className="size-3.5 text-green-400" />
+            ) : (
+              <Copy className="size-3.5" />
+            )}
+          </Button>
+        </div>
       </div>
 
-      {/* Editor */}
-      <MonacoEditor
-        height={editorHeight}
-        language={displayLang}
-        value={value}
-        theme={preferences.theme}
-        beforeMount={registerCustomThemes}
-        onChange={isReadonly ? undefined : (val) => onChange(val ?? "")}
-        options={{
-          readOnly: isReadonly,
-          minimap: { enabled: preferences.minimap },
-          scrollBeyondLastLine: false,
-          fontSize: preferences.fontSize,
-          tabSize: preferences.tabSize,
-          lineNumbers: "on",
-          lineNumbersMinChars: 3,
-          folding: false,
-          wordWrap: preferences.wordWrap ? "on" : "off",
-          renderLineHighlight: isReadonly ? "none" : "line",
-          scrollbar: {
-            vertical: "auto",
-            horizontal: "auto",
-            verticalScrollbarSize: 6,
-            horizontalScrollbarSize: 6,
-          },
-          overviewRulerLanes: 0,
-          hideCursorInOverviewRuler: true,
-          padding: { top: 12, bottom: 12 },
-        }}
-      />
+      {/* Body */}
+      {mode === "explain" && explanation ? (
+        <div
+          className="markdown-preview editor-scrollbar overflow-y-auto px-4 py-3 text-sm"
+          style={{ maxHeight: 400 }}
+        >
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{explanation}</ReactMarkdown>
+        </div>
+      ) : (
+        <MonacoEditor
+          height={editorHeight}
+          language={displayLang}
+          value={value}
+          theme={preferences.theme}
+          beforeMount={registerCustomThemes}
+          onChange={isReadonly ? undefined : (val) => onChange(val ?? "")}
+          options={{
+            readOnly: isReadonly,
+            minimap: { enabled: preferences.minimap },
+            scrollBeyondLastLine: false,
+            fontSize: preferences.fontSize,
+            tabSize: preferences.tabSize,
+            lineNumbers: "on",
+            lineNumbersMinChars: 3,
+            folding: false,
+            wordWrap: preferences.wordWrap ? "on" : "off",
+            renderLineHighlight: isReadonly ? "none" : "line",
+            scrollbar: {
+              vertical: "auto",
+              horizontal: "auto",
+              verticalScrollbarSize: 6,
+              horizontalScrollbarSize: 6,
+            },
+            overviewRulerLanes: 0,
+            hideCursorInOverviewRuler: true,
+            padding: { top: 12, bottom: 12 },
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requireSession, checkCollectionLimit } from "@/lib/actions/guards";
 import {
   createCollection as dbCreateCollection,
   updateCollection as dbUpdateCollection,
@@ -9,9 +9,6 @@ import {
 } from "@/lib/db/collections";
 import { validateCreateCollection } from "@/lib/collections-validation";
 import type { CreateCollectionInput } from "@/lib/collections-validation";
-import { isAtCollectionLimit, collectionLimitMessage } from "@/lib/usage-limits";
-import { FREE_COLLECTIONS_LIMIT } from "@/lib/constants";
-import { prisma } from "@/lib/prisma";
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -32,11 +29,11 @@ export type ToggleFavoriteResult =
 export async function toggleCollectionFavorite(
   id: string
 ): Promise<ToggleFavoriteResult> {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+  const s = await requireSession();
+  if (!s.ok) return { success: false, error: s.error };
 
   try {
-    const newValue = await dbToggleCollectionFavorite(id, session.user.id);
+    const newValue = await dbToggleCollectionFavorite(id, s.userId);
     if (newValue === null) return { success: false, error: "Collection not found" };
     return { success: true, isFavorite: newValue };
   } catch {
@@ -48,14 +45,14 @@ export async function updateCollection(
   id: string,
   input: CreateCollectionInput
 ): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+  const s = await requireSession();
+  if (!s.ok) return { success: false, error: s.error };
 
   const validation = validateCreateCollection(input);
   if (!validation.ok) return { success: false, error: validation.error };
 
   try {
-    await dbUpdateCollection(id, session.user.id, validation.data);
+    await dbUpdateCollection(id, s.userId, validation.data);
     return { success: true };
   } catch {
     return { success: false, error: "Failed to update collection" };
@@ -63,11 +60,11 @@ export async function updateCollection(
 }
 
 export async function deleteCollection(id: string): Promise<ActionResult> {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+  const s = await requireSession();
+  if (!s.ok) return { success: false, error: s.error };
 
   try {
-    await dbDeleteCollection(id, session.user.id);
+    await dbDeleteCollection(id, s.userId);
     return { success: true };
   } catch {
     return { success: false, error: "Failed to delete collection" };
@@ -77,22 +74,17 @@ export async function deleteCollection(id: string): Promise<ActionResult> {
 export async function createCollection(
   input: CreateCollectionInput
 ): Promise<CreateCollectionResult> {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+  const s = await requireSession();
+  if (!s.ok) return { success: false, error: s.error };
 
-  // Free tier collection count limit
-  if (!session.user.isPro) {
-    const count = await prisma.collection.count({ where: { userId: session.user.id } });
-    if (isAtCollectionLimit(false, count)) {
-      return { success: false, error: collectionLimitMessage(FREE_COLLECTIONS_LIMIT) };
-    }
-  }
+  const limitError = await checkCollectionLimit(s.userId, s.isPro);
+  if (limitError) return { success: false, error: limitError };
 
   const validation = validateCreateCollection(input);
   if (!validation.ok) return { success: false, error: validation.error };
 
   try {
-    const created = await dbCreateCollection(session.user.id, validation.data);
+    const created = await dbCreateCollection(s.userId, validation.data);
     return { success: true, data: created };
   } catch {
     return { success: false, error: "Failed to create collection" };

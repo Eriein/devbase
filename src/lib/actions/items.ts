@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requireSession, checkItemLimit } from "@/lib/actions/guards";
 import {
   createItem as dbCreateItem,
   updateItem as dbUpdateItem,
@@ -16,9 +16,7 @@ import {
 import type { CreateItemInput, UpdateItemInput } from "@/lib/items-validation";
 import type { ItemDetail } from "@/lib/db/items";
 import { deleteFromR2 } from "@/lib/r2";
-import { isAtItemLimit, canUploadFiles, itemLimitMessage } from "@/lib/usage-limits";
-import { FREE_ITEMS_LIMIT } from "@/lib/constants";
-import { prisma } from "@/lib/prisma";
+import { canUploadFiles } from "@/lib/usage-limits";
 
 export type CreateItemResult =
   | { success: true; data: ItemDetail }
@@ -45,11 +43,11 @@ export type TogglePinResult =
 export async function toggleItemFavorite(
   itemId: string
 ): Promise<ToggleFavoriteResult> {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+  const s = await requireSession();
+  if (!s.ok) return { success: false, error: s.error };
 
   try {
-    const newValue = await dbToggleItemFavorite(session.user.id, itemId);
+    const newValue = await dbToggleItemFavorite(s.userId, itemId);
     if (newValue === null) return { success: false, error: "Item not found" };
     return { success: true, isFavorite: newValue };
   } catch {
@@ -60,11 +58,11 @@ export async function toggleItemFavorite(
 export async function toggleItemPin(
   itemId: string
 ): Promise<TogglePinResult> {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+  const s = await requireSession();
+  if (!s.ok) return { success: false, error: s.error };
 
   try {
-    const newValue = await dbToggleItemPin(session.user.id, itemId);
+    const newValue = await dbToggleItemPin(s.userId, itemId);
     if (newValue === null) return { success: false, error: "Item not found" };
     return { success: true, isPinned: newValue };
   } catch {
@@ -75,21 +73,16 @@ export async function toggleItemPin(
 export async function createItem(
   input: CreateItemInput
 ): Promise<CreateItemResult> {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+  const s = await requireSession();
+  if (!s.ok) return { success: false, error: s.error };
 
   // Pro gate: file/image items require Pro
-  if (input.fileUrl && !canUploadFiles(session.user.isPro)) {
+  if (input.fileUrl && !canUploadFiles(s.isPro)) {
     return { success: false, error: "File uploads require a Pro subscription" };
   }
 
-  // Free tier item count limit
-  if (!session.user.isPro) {
-    const count = await prisma.item.count({ where: { userId: session.user.id } });
-    if (isAtItemLimit(false, count)) {
-      return { success: false, error: itemLimitMessage(FREE_ITEMS_LIMIT) };
-    }
-  }
+  const limitError = await checkItemLimit(s.userId, s.isPro);
+  if (limitError) return { success: false, error: limitError };
 
   const validation = validateCreateItem(input);
   if (!validation.ok) return { success: false, error: validation.error };
@@ -97,7 +90,7 @@ export async function createItem(
   const data = validation.data;
 
   try {
-    const created = await dbCreateItem(session.user.id, {
+    const created = await dbCreateItem(s.userId, {
       itemTypeId: data.itemTypeId,
       title: data.title,
       description: data.description ?? null,
@@ -118,12 +111,12 @@ export async function createItem(
 }
 
 export async function deleteItem(itemId: string): Promise<DeleteItemResult> {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+  const s = await requireSession();
+  if (!s.ok) return { success: false, error: s.error };
 
   try {
-    const fileKey = await getItemFileKey(session.user.id, itemId);
-    const deleted = await dbDeleteItem(session.user.id, itemId);
+    const fileKey = await getItemFileKey(s.userId, itemId);
+    const deleted = await dbDeleteItem(s.userId, itemId);
     if (!deleted) return { success: false, error: "Item not found" };
 
     if (fileKey) {
@@ -142,8 +135,8 @@ export async function updateItem(
   itemId: string,
   input: UpdateItemInput
 ): Promise<UpdateItemResult> {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+  const s = await requireSession();
+  if (!s.ok) return { success: false, error: s.error };
 
   const validation = validateUpdateItem(input);
   if (!validation.ok) return { success: false, error: validation.error };
@@ -151,7 +144,7 @@ export async function updateItem(
   const data = validation.data;
 
   try {
-    const updated = await dbUpdateItem(session.user.id, itemId, {
+    const updated = await dbUpdateItem(s.userId, itemId, {
       title: data.title,
       description: data.description ?? null,
       content: data.content ?? null,

@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requireSession } from "@/lib/actions/guards";
 import { stripe, STRIPE_PRICES, validateCheckoutEligibility } from "@/lib/stripe";
 import type { StripePlan } from "@/lib/stripe";
 import { getUserStripeInfo } from "@/lib/db/subscriptions";
@@ -12,10 +12,10 @@ export type CheckoutResult =
 export async function createCheckoutSession(
   plan: StripePlan
 ): Promise<CheckoutResult> {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+  const s = await requireSession();
+  if (!s.ok) return { success: false, error: s.error };
 
-  const user = await getUserStripeInfo(session.user.id);
+  const user = await getUserStripeInfo(s.userId);
   if (!user) return { success: false, error: "User not found" };
 
   const eligibility = validateCheckoutEligibility(plan, user.isPro);
@@ -34,8 +34,8 @@ export async function createCheckoutSession(
       success_url: `${appUrl}/settings?upgrade=success`,
       cancel_url: `${appUrl}/settings?upgrade=cancelled`,
       customer: user.stripeCustomerId ?? undefined,
-      metadata: { userId: session.user.id },
-      subscription_data: { metadata: { userId: session.user.id } },
+      metadata: { userId: s.userId },
+      subscription_data: { metadata: { userId: s.userId } },
     });
 
     if (!checkoutSession.url) return { success: false, error: "No checkout URL" };
@@ -48,10 +48,10 @@ export async function createCheckoutSession(
 }
 
 export async function createBillingPortalSession(): Promise<CheckoutResult> {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+  const s = await requireSession();
+  if (!s.ok) return { success: false, error: s.error };
 
-  const user = await getUserStripeInfo(session.user.id);
+  const user = await getUserStripeInfo(s.userId);
   if (!user?.stripeCustomerId) return { success: false, error: "No billing account" };
 
   try {

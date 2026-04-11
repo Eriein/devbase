@@ -1,8 +1,9 @@
 import { z } from "zod";
+import { trimOrNull } from "./utils";
+import { AI_MAX_CONTENT_LENGTH } from "./constants";
 
 // ─── Constants ───────────────────────────────────────────────
 
-export const MAX_CONTENT_LENGTH = 2000;
 export const OPTIMIZE_ITEM_TYPE = "prompt";
 
 // ─── Input schema ────────────────────────────────────────────
@@ -51,12 +52,6 @@ export function validateOptimizePromptInput(
 
 // ─── Pure helpers ────────────────────────────────────────────
 
-function trimOrNull(value: string | null | undefined): string | null {
-  if (!value) return null;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-}
-
 /**
  * Build the prompt text sent to the model.
  *
@@ -93,8 +88,8 @@ export function buildOptimizePromptText(input: OptimizePromptInput): string {
 
   const content = input.content;
   const truncated =
-    content.length > MAX_CONTENT_LENGTH
-      ? content.slice(0, MAX_CONTENT_LENGTH) + "..."
+    content.length > AI_MAX_CONTENT_LENGTH
+      ? content.slice(0, AI_MAX_CONTENT_LENGTH) + "..."
       : content;
   parts.push(`Original prompt:\n${truncated}`);
 

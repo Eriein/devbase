@@ -3,9 +3,9 @@ import {
   validateAutoTagsInput,
   buildTagPromptText,
   parseTagsResponse,
-  MAX_CONTENT_LENGTH,
   MAX_TAGS,
 } from "./ai-tags-validation";
+import { AI_MAX_CONTENT_LENGTH } from "./constants";
 
 // ─── validateAutoTagsInput ──────────────────────────────────
 
@@ -89,18 +89,18 @@ describe("buildTagPromptText", () => {
     expect(result).toContain("Content: export function useDebounce() {}");
   });
 
-  it("truncates content exceeding MAX_CONTENT_LENGTH", () => {
-    const longContent = "a".repeat(MAX_CONTENT_LENGTH + 500);
+  it("truncates content exceeding AI_MAX_CONTENT_LENGTH", () => {
+    const longContent = "a".repeat(AI_MAX_CONTENT_LENGTH + 500);
     const result = buildTagPromptText({
       title: "Long Content",
       content: longContent,
     });
-    expect(result).toContain("Content: " + "a".repeat(MAX_CONTENT_LENGTH) + "...");
-    expect(result).not.toContain("a".repeat(MAX_CONTENT_LENGTH + 1));
+    expect(result).toContain("Content: " + "a".repeat(AI_MAX_CONTENT_LENGTH) + "...");
+    expect(result).not.toContain("a".repeat(AI_MAX_CONTENT_LENGTH + 1));
   });
 
-  it("does not truncate content at exactly MAX_CONTENT_LENGTH", () => {
-    const exactContent = "b".repeat(MAX_CONTENT_LENGTH);
+  it("does not truncate content at exactly AI_MAX_CONTENT_LENGTH", () => {
+    const exactContent = "b".repeat(AI_MAX_CONTENT_LENGTH);
     const result = buildTagPromptText({
       title: "Exact",
       content: exactContent,

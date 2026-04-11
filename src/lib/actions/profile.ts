@@ -3,7 +3,8 @@
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { auth, signOut } from "@/auth";
+import { signOut } from "@/auth";
+import { requireSession } from "@/lib/actions/guards";
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -38,8 +39,8 @@ export async function changePassword(
   _prevState: ProfileActionState,
   formData: FormData
 ): Promise<ProfileActionState> {
-  const session = await auth();
-  if (!session?.user?.id) return { error: "Not authenticated" };
+  const s = await requireSession();
+  if (!s.ok) return { error: s.error };
 
   const currentPassword = formData.get("currentPassword") as string;
   const newPassword = formData.get("newPassword") as string;
@@ -53,7 +54,7 @@ export async function changePassword(
   if (validationError) return { error: validationError };
 
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: s.userId },
     select: { password: true },
   });
 
@@ -63,12 +64,12 @@ export async function changePassword(
   if (!isValid) return { error: "Current password is incorrect" };
 
   await prisma.session.deleteMany({
-    where: { userId: session.user.id },
+    where: { userId: s.userId },
   });
 
   const hashedPassword = await bcrypt.hash(newPassword, 12);
   await prisma.user.update({
-    where: { id: session.user.id },
+    where: { id: s.userId },
     data: { password: hashedPassword },
   });
 
@@ -81,17 +82,17 @@ export async function deleteAccount(
   _prevState: ProfileActionState,
   formData: FormData
 ): Promise<ProfileActionState> {
-  const session = await auth();
-  if (!session?.user?.id) return { error: "Not authenticated" };
+  const s = await requireSession();
+  if (!s.ok) return { error: s.error };
 
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: s.userId },
     select: { password: true },
   });
 
   if (isOAuthUser(user)) {
     await prisma.user.delete({
-      where: { id: session.user.id },
+      where: { id: s.userId },
     });
 
     await signOut({ redirectTo: "/sign-in" });
@@ -105,7 +106,7 @@ export async function deleteAccount(
   if (!isValid) return { error: "Incorrect password" };
 
   await prisma.user.delete({
-    where: { id: session.user.id },
+    where: { id: s.userId },
   });
 
   await signOut({ redirectTo: "/sign-in" });

@@ -1,8 +1,8 @@
 import { z } from "zod";
+import { AI_MAX_CONTENT_LENGTH } from "./constants";
 
 // ─── Constants ───────────────────────────────────────────────
 
-export const MAX_CONTENT_LENGTH = 2000;
 export const MIN_TAGS = 1;
 export const MAX_TAGS = 5;
 
@@ -30,7 +30,7 @@ export function validateAutoTagsInput(
 
 // ─── Pure helpers ────────────────────────────────────────────
 
-/** Build the prompt text from item fields, truncating content to MAX_CONTENT_LENGTH */
+/** Build the prompt text from item fields, truncating content to AI_MAX_CONTENT_LENGTH */
 export function buildTagPromptText(input: AutoTagsInput): string {
   const parts: string[] = [`Title: ${input.title}`];
   if (input.description) {
@@ -38,8 +38,8 @@ export function buildTagPromptText(input: AutoTagsInput): string {
   }
   if (input.content) {
     const truncated =
-      input.content.length > MAX_CONTENT_LENGTH
-        ? input.content.slice(0, MAX_CONTENT_LENGTH) + "..."
+      input.content.length > AI_MAX_CONTENT_LENGTH
+        ? input.content.slice(0, AI_MAX_CONTENT_LENGTH) + "..."
         : input.content;
     parts.push(`Content: ${truncated}`);
   }

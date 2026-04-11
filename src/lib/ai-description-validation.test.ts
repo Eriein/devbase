@@ -3,9 +3,9 @@ import {
   validateAutoDescriptionInput,
   buildDescriptionPromptText,
   parseDescriptionResponse,
-  MAX_CONTENT_LENGTH,
   MAX_SENTENCES,
 } from "./ai-description-validation";
+import { AI_MAX_CONTENT_LENGTH } from "./constants";
 
 // ─── validateAutoDescriptionInput ───────────────────────────
 
@@ -134,19 +134,19 @@ describe("buildDescriptionPromptText", () => {
     expect(result).toContain("Content: Review this code for correctness and style.");
   });
 
-  it("truncates content exceeding MAX_CONTENT_LENGTH", () => {
-    const longContent = "a".repeat(MAX_CONTENT_LENGTH + 500);
+  it("truncates content exceeding AI_MAX_CONTENT_LENGTH", () => {
+    const longContent = "a".repeat(AI_MAX_CONTENT_LENGTH + 500);
     const result = buildDescriptionPromptText({
       title: "Long",
       content: longContent,
       itemTypeName: "note",
     });
-    expect(result).toContain("Content: " + "a".repeat(MAX_CONTENT_LENGTH) + "...");
-    expect(result).not.toContain("a".repeat(MAX_CONTENT_LENGTH + 1));
+    expect(result).toContain("Content: " + "a".repeat(AI_MAX_CONTENT_LENGTH) + "...");
+    expect(result).not.toContain("a".repeat(AI_MAX_CONTENT_LENGTH + 1));
   });
 
-  it("does not truncate content at exactly MAX_CONTENT_LENGTH", () => {
-    const exact = "b".repeat(MAX_CONTENT_LENGTH);
+  it("does not truncate content at exactly AI_MAX_CONTENT_LENGTH", () => {
+    const exact = "b".repeat(AI_MAX_CONTENT_LENGTH);
     const result = buildDescriptionPromptText({
       title: "Exact",
       content: exact,

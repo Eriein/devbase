@@ -1,8 +1,9 @@
 import { z } from "zod";
+import { trimOrNull } from "./utils";
+import { AI_MAX_CONTENT_LENGTH } from "./constants";
 
 // ─── Constants ───────────────────────────────────────────────
 
-export const MAX_CONTENT_LENGTH = 2000;
 export const EXPLAIN_ITEM_TYPES = ["snippet", "command"] as const;
 export type ExplainItemType = (typeof EXPLAIN_ITEM_TYPES)[number];
 
@@ -52,16 +53,10 @@ export function validateExplainCodeInput(
 
 // ─── Pure helpers ────────────────────────────────────────────
 
-function trimOrNull(value: string | null | undefined): string | null {
-  if (!value) return null;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-}
-
 /**
  * Build the prompt text sent to the model. The type, language, and (optional)
  * title frame the context; the content is the thing we want explained. Content
- * is truncated to MAX_CONTENT_LENGTH characters to keep token usage bounded.
+ * is truncated to AI_MAX_CONTENT_LENGTH characters to keep token usage bounded.
  */
 export function buildExplainPromptText(input: ExplainCodeInput): string {
   const parts: string[] = [`Type: ${input.itemTypeName.toLowerCase()}`];
@@ -74,8 +69,8 @@ export function buildExplainPromptText(input: ExplainCodeInput): string {
 
   const content = input.content;
   const truncated =
-    content.length > MAX_CONTENT_LENGTH
-      ? content.slice(0, MAX_CONTENT_LENGTH) + "..."
+    content.length > AI_MAX_CONTENT_LENGTH
+      ? content.slice(0, AI_MAX_CONTENT_LENGTH) + "..."
       : content;
   parts.push(`Content:\n${truncated}`);
 

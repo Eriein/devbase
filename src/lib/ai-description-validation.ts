@@ -1,8 +1,9 @@
 import { z } from "zod";
+import { trimOrNull } from "./utils";
+import { AI_MAX_CONTENT_LENGTH } from "./constants";
 
 // ─── Constants ───────────────────────────────────────────────
 
-export const MAX_CONTENT_LENGTH = 2000;
 export const MAX_SENTENCES = 2;
 
 // ─── Input schema ────────────────────────────────────────────
@@ -51,16 +52,10 @@ export function validateAutoDescriptionInput(
 
 // ─── Pure helpers ────────────────────────────────────────────
 
-function trimOrNull(value: string | null | undefined): string | null {
-  if (!value) return null;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-}
-
 /**
  * Build the prompt text from whatever item fields are available. The item
  * type name is always included so the model can tailor its phrasing.
- * Content is truncated to MAX_CONTENT_LENGTH characters.
+ * Content is truncated to AI_MAX_CONTENT_LENGTH characters.
  */
 export function buildDescriptionPromptText(input: AutoDescriptionInput): string {
   const parts: string[] = [`Type: ${input.itemTypeName}`];
@@ -80,8 +75,8 @@ export function buildDescriptionPromptText(input: AutoDescriptionInput): string 
   const content = trimOrNull(input.content);
   if (content) {
     const truncated =
-      content.length > MAX_CONTENT_LENGTH
-        ? content.slice(0, MAX_CONTENT_LENGTH) + "..."
+      content.length > AI_MAX_CONTENT_LENGTH
+        ? content.slice(0, AI_MAX_CONTENT_LENGTH) + "..."
         : content;
     parts.push(`Content: ${truncated}`);
   }

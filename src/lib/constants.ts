@@ -5,3 +5,5 @@ export const DASHBOARD_RECENT_ITEMS_LIMIT = 10;
 
 export const FREE_ITEMS_LIMIT = 50;
 export const FREE_COLLECTIONS_LIMIT = 3;
+
+export const AI_MAX_CONTENT_LENGTH = 2000;

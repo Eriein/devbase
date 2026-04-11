@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
+import { requireSession } from "@/lib/actions/guards";
 import { type EditorPreferences } from "@/types/editor-preferences";
 import {
   validateEditorPreferences,
@@ -18,15 +18,15 @@ export type UpdateEditorPreferencesState = {
 export async function updateEditorPreferences(
   preferences: Partial<EditorPreferences>
 ): Promise<UpdateEditorPreferencesState> {
-  const session = await auth();
-  if (!session?.user?.id) return { error: "Not authenticated" };
+  const s = await requireSession();
+  if (!s.ok) return { error: s.error };
 
   const merged = mergeWithDefaults(preferences);
   const validated = validateEditorPreferences(merged);
   if (!validated) return { error: "Invalid preferences" };
 
   await prisma.user.update({
-    where: { id: session.user.id },
+    where: { id: s.userId },
     data: { editorPreferences: validated },
   });
 

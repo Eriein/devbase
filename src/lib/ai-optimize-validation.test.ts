@@ -3,9 +3,8 @@ import {
   validateOptimizePromptInput,
   buildOptimizePromptText,
   parseOptimizeResponse,
-  MAX_CONTENT_LENGTH,
-  OPTIMIZE_ITEM_TYPE,
 } from "./ai-optimize-validation";
+import { AI_MAX_CONTENT_LENGTH } from "./constants";
 
 // ─── validateOptimizePromptInput ───────────────────────────────
 
@@ -182,19 +181,19 @@ describe("buildOptimizePromptText", () => {
     expect(result).toContain("Original prompt:\nWrite a function to add two numbers");
   });
 
-  it("truncates content exceeding MAX_CONTENT_LENGTH", () => {
-    const longContent = "a".repeat(MAX_CONTENT_LENGTH + 500);
+  it("truncates content exceeding AI_MAX_CONTENT_LENGTH", () => {
+    const longContent = "a".repeat(AI_MAX_CONTENT_LENGTH + 500);
     const result = buildOptimizePromptText({
       content: longContent,
       itemTypeName: "prompt",
       itemId: "123",
     });
-    expect(result).toContain("a".repeat(MAX_CONTENT_LENGTH) + "...");
-    expect(result).not.toContain("a".repeat(MAX_CONTENT_LENGTH + 1));
+    expect(result).toContain("a".repeat(AI_MAX_CONTENT_LENGTH) + "...");
+    expect(result).not.toContain("a".repeat(AI_MAX_CONTENT_LENGTH + 1));
   });
 
-  it("does not truncate content at exactly MAX_CONTENT_LENGTH", () => {
-    const exact = "b".repeat(MAX_CONTENT_LENGTH);
+  it("does not truncate content at exactly AI_MAX_CONTENT_LENGTH", () => {
+    const exact = "b".repeat(AI_MAX_CONTENT_LENGTH);
     const result = buildOptimizePromptText({
       content: exact,
       itemTypeName: "prompt",

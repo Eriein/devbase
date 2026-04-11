@@ -3,8 +3,8 @@ import {
   validateExplainCodeInput,
   buildExplainPromptText,
   parseExplanationResponse,
-  MAX_CONTENT_LENGTH,
 } from "./ai-explain-validation";
+import { AI_MAX_CONTENT_LENGTH } from "./constants";
 
 // ─── validateExplainCodeInput ───────────────────────────────
 
@@ -137,18 +137,18 @@ describe("buildExplainPromptText", () => {
     expect(result).toContain("Content:\nconst x = 1;\nconsole.log(x);");
   });
 
-  it("truncates content exceeding MAX_CONTENT_LENGTH", () => {
-    const longContent = "a".repeat(MAX_CONTENT_LENGTH + 500);
+  it("truncates content exceeding AI_MAX_CONTENT_LENGTH", () => {
+    const longContent = "a".repeat(AI_MAX_CONTENT_LENGTH + 500);
     const result = buildExplainPromptText({
       content: longContent,
       itemTypeName: "snippet",
     });
-    expect(result).toContain("a".repeat(MAX_CONTENT_LENGTH) + "...");
-    expect(result).not.toContain("a".repeat(MAX_CONTENT_LENGTH + 1));
+    expect(result).toContain("a".repeat(AI_MAX_CONTENT_LENGTH) + "...");
+    expect(result).not.toContain("a".repeat(AI_MAX_CONTENT_LENGTH + 1));
   });
 
-  it("does not truncate content at exactly MAX_CONTENT_LENGTH", () => {
-    const exact = "b".repeat(MAX_CONTENT_LENGTH);
+  it("does not truncate content at exactly AI_MAX_CONTENT_LENGTH", () => {
+    const exact = "b".repeat(AI_MAX_CONTENT_LENGTH);
     const result = buildExplainPromptText({
       content: exact,
       itemTypeName: "snippet",

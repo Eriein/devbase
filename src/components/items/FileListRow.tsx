@@ -3,7 +3,7 @@
 import { Download, File, FileText, FileImage, FileCode, FileArchive } from "lucide-react";
 import type { DashboardItem } from "@/lib/db/items";
 import { useItemDrawer } from "./ItemDrawerProvider";
-import { formatFileSize } from "@/lib/utils";
+import { formatFileSize, formatDate } from "@/lib/utils";
 
 function renderFileIcon(fileName: string | null) {
   const ext = fileName?.split(".").pop()?.toLowerCase() ?? "";
@@ -13,15 +13,6 @@ function renderFileIcon(fileName: string | null) {
   if (["zip", "tar", "gz", "rar", "7z"].includes(ext)) return <FileArchive className={className} />;
   if (["md", "txt", "pdf", "doc", "docx"].includes(ext)) return <FileText className={className} />;
   return <File className={className} />;
-}
-
-
-function formatDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
 }
 
 export function FileListRow({ item }: { item: DashboardItem }) {

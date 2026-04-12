@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { FormBanner } from "@/components/ui/FormBanner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OAuthProviders } from "./OAuthProviders";
@@ -27,9 +28,9 @@ export function RegisterForm() {
 
       <form action={formAction} className="space-y-4">
         {state.error && (
-          <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive">
+          <FormBanner variant="error">
             {state.error}
-          </div>
+          </FormBanner>
         )}
 
         <div className="space-y-1.5">

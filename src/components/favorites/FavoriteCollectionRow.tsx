@@ -3,14 +3,7 @@
 import Link from "next/link";
 import { Folder } from "lucide-react";
 import type { CollectionWithTypes } from "@/lib/db/collections";
-
-function formatDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { formatDate } from "@/lib/utils";
 
 export function FavoriteCollectionRow({ collection }: { collection: CollectionWithTypes }) {
   return (

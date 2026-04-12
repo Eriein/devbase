@@ -10,15 +10,7 @@ import {
 import type { DashboardItem } from "@/lib/db/items";
 import { useItemDrawer } from "./ItemDrawerProvider";
 import { iconMap } from "@/lib/item-type-helpers";
-
-function timeAgo(date: Date | string): string {
-  const diff = Date.now() - new Date(date).getTime();
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
-}
+import { timeAgo } from "@/lib/utils";
 
 export function ItemCard({ item }: { item: DashboardItem }) {
   const { openDrawer } = useItemDrawer();

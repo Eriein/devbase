@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { FormBanner } from "@/components/ui/FormBanner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { deleteAccount } from "@/lib/actions/profile";
@@ -58,9 +59,9 @@ export function DeleteAccountDialog({ hasPassword }: { hasPassword: boolean }) {
         </DialogHeader>
 
         {error && (
-          <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive">
+          <FormBanner variant="error">
             {error}
-          </div>
+          </FormBanner>
         )}
 
         <div className="space-y-3">

@@ -2,14 +2,7 @@
 
 import { Clock, FolderOpen } from "lucide-react";
 import type { ItemDetail } from "@/lib/db/items";
-
-function formatDate(date: string | Date): string {
-  return new Date(date).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
+import { formatLongDate } from "@/lib/utils";
 
 interface ItemMetadataSectionProps {
   item: ItemDetail;
@@ -47,11 +40,11 @@ export function ItemMetadataSection({ item }: ItemMetadataSectionProps) {
         <div className="space-y-2 text-sm">
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Created</span>
-            <span className="text-foreground">{formatDate(item.createdAt)}</span>
+            <span className="text-foreground">{formatLongDate(item.createdAt)}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Updated</span>
-            <span className="text-foreground">{formatDate(item.updatedAt)}</span>
+            <span className="text-foreground">{formatLongDate(item.updatedAt)}</span>
           </div>
         </div>
       </div>

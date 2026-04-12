@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
+import { FormBanner } from "@/components/ui/FormBanner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { changePassword, type ProfileActionState } from "@/lib/actions/profile";
@@ -15,15 +16,15 @@ export function ChangePasswordForm() {
   return (
     <form action={formAction} className="space-y-4">
       {state.error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive">
+        <FormBanner variant="error">
           {state.error}
-        </div>
+        </FormBanner>
       )}
 
       {state.success && (
-        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2.5 text-sm text-emerald-400">
+        <FormBanner variant="success">
           Password updated successfully.
-        </div>
+        </FormBanner>
       )}
 
       <div className="space-y-1.5">

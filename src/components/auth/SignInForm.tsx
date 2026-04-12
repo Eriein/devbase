@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { FormBanner } from "@/components/ui/FormBanner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OAuthProviders } from "./OAuthProviders";
@@ -102,15 +103,15 @@ export function SignInForm() {
       )}
 
       {registered && (
-        <div className="rounded-lg border border-green-500/30 bg-green-500/5 px-3 py-2.5 text-sm text-green-400">
+        <FormBanner variant="success">
           Account created successfully! You can now sign in.
-        </div>
+        </FormBanner>
       )}
 
       {reset && (
-        <div className="rounded-lg border border-green-500/30 bg-green-500/5 px-3 py-2.5 text-sm text-green-400">
+        <FormBanner variant="success">
           Password reset successfully! You can now sign in with your new password.
-        </div>
+        </FormBanner>
       )}
 
       <OAuthProviders callbackUrl={callbackUrl} />
@@ -120,9 +121,9 @@ export function SignInForm() {
         <input type="hidden" name="callbackUrl" value={callbackUrl} />
 
         {state.error && (
-          <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive">
+          <FormBanner variant="error">
             {state.error}
-          </div>
+          </FormBanner>
         )}
 
         <div className="space-y-1.5">

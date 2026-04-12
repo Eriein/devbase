@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { FormBanner } from "@/components/ui/FormBanner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { forgotPassword, type AuthState } from "@/lib/actions/auth";
@@ -26,10 +27,10 @@ export function ForgotPasswordForm() {
 
       {state.success ? (
         <div className="space-y-4">
-          <div className="rounded-lg border border-green-500/30 bg-green-500/5 px-3 py-2.5 text-sm text-green-400">
+          <FormBanner variant="success">
             If an account exists with that email, we sent a password reset link.
             Check your inbox.
-          </div>
+          </FormBanner>
           <p className="text-center text-[13px] text-muted-foreground">
             <Link
               href="/sign-in"
@@ -43,9 +44,9 @@ export function ForgotPasswordForm() {
         <>
           <form action={formAction} className="space-y-4">
             {state.error && (
-              <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive">
+              <FormBanner variant="error">
                 {state.error}
-              </div>
+              </FormBanner>
             )}
 
             <div className="space-y-1.5">

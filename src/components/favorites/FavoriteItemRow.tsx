@@ -3,14 +3,7 @@
 import type { DashboardItem } from "@/lib/db/items";
 import { useItemDrawer } from "@/components/items/ItemDrawerProvider";
 import { iconMap } from "@/lib/item-type-helpers";
-
-function formatDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { formatDate } from "@/lib/utils";
 
 export function FavoriteItemRow({ item }: { item: DashboardItem }) {
   const { openDrawer } = useItemDrawer();

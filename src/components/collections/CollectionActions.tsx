@@ -2,17 +2,8 @@
 
 import { useState } from "react";
 import { Pencil, Trash2, Star } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { DeleteCollectionDialog } from "./DeleteCollectionDialog";
 import { toast } from "sonner";
 import { deleteCollection, toggleCollectionFavorite } from "@/lib/actions/collections";
 import { EditCollectionDialog } from "@/components/collections/EditCollectionDialog";
@@ -82,28 +73,12 @@ export function CollectionActions({ id, name, description, isFavorite: initialFa
         onOpenChange={setEditOpen}
       />
 
-      {/* Delete confirmation */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete collection?</AlertDialogTitle>
-            <AlertDialogDescription>
-              &ldquo;{name}&rdquo; will be removed. Items in this collection
-              will not be deleted.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isPending ? "Deleting…" : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteCollectionDialog
+        name={name}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onConfirm={handleDelete}
+      />
     </>
   );
 }
